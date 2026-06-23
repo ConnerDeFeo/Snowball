@@ -13,12 +13,13 @@ Retrieve the past 6 years of 10k's, 10Q', Proxy Statements, and Earning Calls
 ### 2.1 Overview
 Feed into LLM to output a variety of rankings of various metrics based on readings
 
-### 2.2 Challenges
+### 2.2 AI Hindsight
 
-1. The first challenge is the processing of documents into realevant stats such as a score for managmenet.
-This is due to the model having heignsight bias, it already knows that Apple is worth 3T modern day,
+- Problem: The first challenge is the processing of documents into realevant stats such as a score for managmenet.
+This is due to the model having hindsight bias, it already knows that Apple is worth 3T modern day,
 so asking it to output values that will be used for training the final model will be filled with
 bias.
+
 
 ---
 
