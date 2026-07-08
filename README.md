@@ -10,10 +10,7 @@ ease of use.
 Documents will be pulled from EDGAR, specifically their HTML format variant for the structure that comes with it.
 
 ### 1.3 Chunking Documents
-- **10-K's and 10-Q's**: Both of these documents follow standard orginization and can be split by Item headers in the HTML
-- **Proxy statements**: These follow less structure but numbers can be grabbed using edgartools and the three main sections can be gotten via HTML headers
-
-Following the chunking HTML tags will be removed for a clean text-only output.
+Edgar tools will be used in python
 
 ### 1.4 Storing Documents
 Documents will be cached in S3 so that re-retrieval will not be needed.
@@ -45,3 +42,17 @@ Feed variables from LLM into trained model to output predicted future free cash 
 
 # Project Architecture
 
+## Tech Stack
+This project will have a React front end with a backend and 2 microservices, all in go and contanerized via docker
+
+### React Front End
+NA
+
+### Server
+Entry point for all main calls to snowball, main orchestrater of all micro services
+
+### Edgar Retrival
+Python based container taking advantage of edgartools
+
+### Statistical Analysis
+Python based backend ustalizing sckite-learn to deal with the graded rubrics
