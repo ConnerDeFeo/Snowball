@@ -41,18 +41,16 @@ The following are the categories
 Feed variables from LLM into trained model to output predicted future free cash flow of company.
 
 # Project Architecture
+The following are the containers for the application
 
-## Tech Stack
-This project will have a React front end with a backend and 2 microservices, all in go and contanerized via docker
+### Server (Go)
+Entry point for all main calls to snowball, main orchestrater
 
-### React Front End
-NA
+### Edgar Retrival (Python + Edgartools)
+Grab documents and cache them section by section
 
-### Server
-Entry point for all main calls to snowball, main orchestrater of all micro services
+### LLM (Python)
+Generates rubric using LLM and sections handed to it
 
-### Edgar Retrival
-Python based container taking advantage of edgartools
-
-### Statistical Analysis
+### Statistical Analysis (Python + Scikit-learn)
 Python based backend ustalizing sckite-learn to deal with the graded rubrics
