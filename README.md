@@ -60,7 +60,8 @@ This project utalizes the following technologies:
 Entry point for all main calls to snowball, main orchestrater
 
 ## Domain Logic (Python)
-
+The following three modules will be used within the main domain logic of the application.
+This is the center of snowball.
 ### Edgar Retrival (Edgartools)
 Grab documents and cache them section by section
 
@@ -70,5 +71,5 @@ Generates rubric using LLM and sections handed to it
 ### Statistical Analysis (Scikit-learn)
 Python based backend ustalizing sckite-learn to deal with the graded rubrics
 
-### Analysis Pipeline (Lang Chain)
+## Analysis Pipeline (Python + Lang Chain)
 Langchain will be used to answer dynamic questions about why the LLM graded a rubric the way it did
