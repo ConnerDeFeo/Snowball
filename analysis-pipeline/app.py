@@ -1,12 +1,20 @@
-from flask import Flask, jsonify
-from document_retrieval.get_documents import get_documents
+# app.py
+from flask import Flask
+from routes.document_retrieval import document_retrieval_bp
+from routes.health import health_bp
+from config import Config
 
-app = Flask(__name__)
+def create_app(config_class=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_class)
 
+    app.register_blueprint(document_retrieval_bp)
+    app.register_blueprint(health_bp)
 
-@app.route("/health")
-def health():
-    return jsonify(status="ok")
+    return app
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app = create_app()
+    app.run()
+
+

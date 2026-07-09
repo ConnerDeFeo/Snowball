@@ -1,7 +1,7 @@
 import json
 from concurrent.futures import ThreadPoolExecutor
-from FetchDocuments import FetchDocuments
-from FormType import FormType
+from document_retrieval.FetchDocuments import FetchDocuments
+from document_retrieval.FormType import FormType
 from utils.s3 import store
 
 
@@ -49,7 +49,7 @@ def _store_proxy(tckr: str, filing):
     store(key, (filing.text() or "").encode("utf-8"))
 
 
-def get_documents(tckr: str, from_date: str, to_date: str):
+def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
     """
     Fetch every 10-K, 10-Q, and DEF 14A proxy statement for `tckr` filed within
     [from_date, to_date] and cache them to S3.
@@ -58,10 +58,12 @@ def get_documents(tckr: str, from_date: str, to_date: str):
       filings/<tckr>/10-K/<year>/<section>.txt (+ sections.json)
       filings/<tckr>/10-Q/<year>/Q<n>/<section>.txt (+ sections.json)
       filings/<tckr>/DEF 14A/<year>/proxy.txt
+
+    Returns False if `tckr` could not be resolved to a company, True otherwise.
     """
     fetcher = FetchDocuments.create(tckr)
     if fetcher is None:
-        return
+        return False
 
     tenks = fetcher.fetch_multiple_10k(from_date, to_date)
     tenqs = fetcher.fetch_multiple_10q(from_date, to_date)
@@ -75,3 +77,5 @@ def get_documents(tckr: str, from_date: str, to_date: str):
 
         for future in futures:
             future.result()
+
+    return True
