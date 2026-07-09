@@ -50,4 +50,3 @@ class Documents:
             return None
 
         return self._get_relevant_year(year, filings)
-    
