@@ -1,2 +1,76 @@
-__pycache__
-.venv
+# ===== Terraform =====
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+.coverage
+htmlcov/
+
+# ===== Go =====
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+go.work
+go.work.sum
+
+# ===== React / Node =====
+node_modules/
+dist/
+build/
+.next/
+*.tsbuildinfo
+.eslintcache
+coverage/
+
+# ===== Environment / Secrets =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+
+# ===== Editor / OS =====
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# ===== Docker =====
+*.pid
