@@ -62,7 +62,7 @@ Entry point for all main calls to snowball, main orchestrater
 ### Edgar Retrival (Python + Edgartools)
 Grab documents and cache them section by section
 
-### LLM (Python)
+### LLM (Python + Bedrock)
 Generates rubric using LLM and sections handed to it
 
 ### Statistical Analysis (Python + Scikit-learn)
