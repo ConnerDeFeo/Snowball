@@ -57,3 +57,6 @@ Generates rubric using LLM and sections handed to it
 
 ### Statistical Analysis (Python + Scikit-learn)
 Python based backend ustalizing sckite-learn to deal with the graded rubrics
+
+### Analysis Pipeline (Python + Lang Chain)
+Langchain will be used to answer dynamic questions about why the LLM graded a rubric the way it did
