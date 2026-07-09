@@ -14,7 +14,9 @@ Edgar tools will be used in python
 
 ### 1.4 Storing Documents
 Documents will be cached in S3 so that re-retrieval will not be needed.
+
 ---
+
 ## Step 2. LLM Rankings
 
 ### 2.1 Overview
@@ -43,8 +45,16 @@ Feed variables from LLM into trained model to output predicted future free cash 
 ## Step 4. Valuation Analysis
 This is the final step, use langchain to see the "why" behind all of the AI's scores.
 
+---
+
 # Project Architecture
-The following are the containers for the application
+This project utalizes the following technologies:
+- React TS + Tailwind: Front end 
+- Go: non ML and LLM related containers for performance 
+- Python: Anything numerical or ML / LLM related
+- Docker: This project will have a microservice structure for seperation of concerns
+- Kubernetes: Mainly just to play around with container orchestration
+- Terraform: Deployment to AWS
 
 ### Server (Go)
 Entry point for all main calls to snowball, main orchestrater
