@@ -1,6 +1,6 @@
 ### Login for ecr (powershell)
-cmd /c "aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin (account_id).dkr.ecr.us-east-2.amazonaws.com"
+cmd /c "aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 857360184083.dkr.ecr.us-east-2.amazonaws.com"
 ---
 ### Push Docker Images to Ecr
-docker tag (docker_image):latest (account_id).dkr.ecr.us-east-2.amazonaws.com/snowball/(docker_image):latest
-docker push (account_id).dkr.ecr.us-east-2.amazonaws.com/snowball/(docker_image):latest
+docker tag (DockerImage):latest 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/(DockerImage):latest
+docker push 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/(DockerImage):latest
