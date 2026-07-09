@@ -56,17 +56,19 @@ This project utalizes the following technologies:
 - Kubernetes: Mainly just to play around with container orchestration
 - Terraform: Deployment to AWS
 
-### Server (Go)
+## Orchestrator (Go)
 Entry point for all main calls to snowball, main orchestrater
 
-### Edgar Retrival (Python + Edgartools)
+## Domain Logic (Python)
+
+### Edgar Retrival (Edgartools)
 Grab documents and cache them section by section
 
-### LLM (Python + Bedrock)
+### LLM (Bedrock)
 Generates rubric using LLM and sections handed to it
 
-### Statistical Analysis (Python + Scikit-learn)
+### Statistical Analysis (Scikit-learn)
 Python based backend ustalizing sckite-learn to deal with the graded rubrics
 
-### Analysis Pipeline (Python + Lang Chain)
+### Analysis Pipeline (Lang Chain)
 Langchain will be used to answer dynamic questions about why the LLM graded a rubric the way it did
