@@ -5,7 +5,7 @@ document_retrieval_bp = Blueprint("document_retrieval_bp", __name__)
 
 @document_retrieval_bp.route("/documents/<tckr>", methods=["POST"])
 def documents(tckr):
-    data = request.get_json(silent=True) or {}
+    data = request.get_json() or {}
     from_date = data.get("from_date")
     to_date = data.get("to_date")
     if not from_date or not to_date:

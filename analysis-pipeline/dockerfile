@@ -1,0 +1,15 @@
+# Use Python
+FROM python:3.12-slim
+# Directory in the actuall VM
+WORKDIR /app
+
+# Copy requirements first so that they are cached, and only re-pipinstall on new runs
+COPY requirements.txt .
+# Pip install
+RUN pip install -r requirements.txt
+# Now copy everything else
+COPY . .
+# Run server
+CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:create_app()"]
+# The port its being exposed on, documentation really
+EXPOSE 8000
