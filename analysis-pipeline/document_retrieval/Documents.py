@@ -1,7 +1,7 @@
 from edgar import Company, set_identity, CompanyNotFoundError
 from dotenv import load_dotenv
 import os
-import FormType
+from FormType import FormType
 
 # Set identity for EDGAR db
 load_dotenv()
@@ -26,6 +26,7 @@ class Documents:
             filings = [f for f in filings if f.period_of_report.startswith(str(year))]
         return filings[0].obj() if filings else None
 
+    # 10k Retrieval
     def fetch_10k(self, year: int):
         
         filings = self.company.get_filings(form=FormType.TEN_K.value, amendments=False, year=year)
@@ -34,12 +35,12 @@ class Documents:
         return self._get_relevant_year(year, filings)
 
     def fetch_multiple_10k(self, from_date: str, to_date: str):
-        filings = self.company.get_filings(form="10-K").filter(date=f"{from_date}:{to_date}")
+        filings = self.company.get_filings(form=FormType.TEN_K.value).filter(date=f"{from_date}:{to_date}")
 
         for filing in filings:
             print(filing.filing_date, filing.accession_number)
 
-
+    # 10q Retrieval
     def fetch_10q(self, year: int, quarter: int):
         """Fetch a specific 10-Q by fiscal year and quarter (1-4)."""
 
@@ -48,8 +49,14 @@ class Documents:
             return None
 
         return self._get_relevant_year(year, filings)
+    
+    def fetch_multiple_10q(self, from_date: str, to_date: str):
+        filings = self.company.get_filings(form=FormType.TEN_Q.value).filter(date=f"{from_date}:{to_date}")
 
+        for filing in filings:
+            print(filing.filing_date, filing.accession_number)
 
+    # Proxy Retrieval
     def fetch_proxy(self, year: int):
         """Fetch a specific DEF 14A proxy statement by year."""
 
@@ -58,7 +65,8 @@ class Documents:
             return None
 
         return self._get_relevant_year(year, filings)
-    
-documents = Documents.create("AAPL")
+    def fetch_multiple_proxy(self, from_date: str, to_date: str):
+        filings = self.company.get_filings(form=FormType.PROXY.value).filter(date=f"{from_date}:{to_date}")
 
-documents.fetch_multiple_10k("2020-01-01:2024-12-31")
+        for filing in filings:
+            print(filing.filing_date, filing.accession_number)
