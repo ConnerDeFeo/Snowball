@@ -40,6 +40,9 @@ The following are the categories
 ### 3.1 Overview
 Feed variables from LLM into trained model to output predicted future free cash flow of company.
 
+## Step 4. Valuation Analysis
+This is the final step, use langchain to see the "why" behind all of the AI's scores.
+
 # Project Architecture
 The following are the containers for the application
 
