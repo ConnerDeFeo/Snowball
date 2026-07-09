@@ -1,9 +1,6 @@
 import boto3
-from dotenv import load_dotenv
-import os
 
-load_dotenv()
-BUCKET_NAME = os.environ.get("S3_BUCKET_NAME")
+BUCKET_NAME = "snowball-bucket"
 client = boto3.client('s3')
 
 def store(key: str, body: bytes):

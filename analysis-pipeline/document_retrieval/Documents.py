@@ -33,6 +33,13 @@ class Documents:
             return None
         return self._get_relevant_year(year, filings)
 
+    def fetch_multiple_10k(self, from_date: str, to_date: str):
+        filings = self.company.get_filings(form="10-K").filter(date=f"{from_date}:{to_date}")
+
+        for filing in filings:
+            print(filing.filing_date, filing.accession_number)
+
+
     def fetch_10q(self, year: int, quarter: int):
         """Fetch a specific 10-Q by fiscal year and quarter (1-4)."""
 
@@ -51,3 +58,7 @@ class Documents:
             return None
 
         return self._get_relevant_year(year, filings)
+    
+documents = Documents.create("AAPL")
+
+documents.fetch_multiple_10k("2020-01-01:2024-12-31")
