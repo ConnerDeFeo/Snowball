@@ -8,7 +8,7 @@ load_dotenv()
 identity = os.environ.get("EDGAR_IDENTITY")
 set_identity(identity)
 
-class Documents:
+class FetchDocuments:
     def __init__(self, company: Company):
         self.company = company
 
@@ -65,6 +65,9 @@ class Documents:
         return self._get_relevant_year(year, filings)
     
     def fetch_multiple_proxy(self, from_date: str, to_date: str):
+        # Proxy statements are stored as raw text (Filing.text()), not the
+        # compensation-focused object .obj() would return, so we return the
+        # Filing objects themselves here.
         filings = self.company.get_filings(form=FormType.PROXY.value).filter(date=f"{from_date}:{to_date}")
 
-        return [f.obj() for f in filings]
+        return list(filings)
