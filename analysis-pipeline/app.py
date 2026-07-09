@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from document_retrieval.get_documents import get_documents
 
 app = Flask(__name__)
 
