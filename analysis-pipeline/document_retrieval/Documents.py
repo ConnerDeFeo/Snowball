@@ -37,8 +37,7 @@ class Documents:
     def fetch_multiple_10k(self, from_date: str, to_date: str):
         filings = self.company.get_filings(form=FormType.TEN_K.value).filter(date=f"{from_date}:{to_date}")
 
-        for filing in filings:
-            print(filing.filing_date, filing.accession_number)
+        return [f.obj() for f in filings]
 
     # 10q Retrieval
     def fetch_10q(self, year: int, quarter: int):
@@ -53,8 +52,7 @@ class Documents:
     def fetch_multiple_10q(self, from_date: str, to_date: str):
         filings = self.company.get_filings(form=FormType.TEN_Q.value).filter(date=f"{from_date}:{to_date}")
 
-        for filing in filings:
-            print(filing.filing_date, filing.accession_number)
+        return [f.obj() for f in filings]
 
     # Proxy Retrieval
     def fetch_proxy(self, year: int):
@@ -65,8 +63,8 @@ class Documents:
             return None
 
         return self._get_relevant_year(year, filings)
+    
     def fetch_multiple_proxy(self, from_date: str, to_date: str):
         filings = self.company.get_filings(form=FormType.PROXY.value).filter(date=f"{from_date}:{to_date}")
 
-        for filing in filings:
-            print(filing.filing_date, filing.accession_number)
+        return [f.obj() for f in filings]
