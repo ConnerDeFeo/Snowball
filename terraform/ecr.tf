@@ -1,15 +1,36 @@
 locals {
-    registries = ["orchestrator", "analysis-pipeline", "review-pipeline"]
+    repositories = ["orchestrator", "analysis-pipeline", "review-pipeline"]
 }
 
+# Add repositories for oeach of the repos
 resource "aws_ecr_repository" "snowball" {
-  for_each             = toset(local.registries)
+  for_each             = toset(local.repositories)
   name                 = "snowball/${each.value}"
   image_tag_mutability = "IMMUTABLE"
 
   image_scanning_configuration {
     scan_on_push = true
   }
+}
+
+# Remove non-latest images
+resource "aws_ecr_lifecycle_policy" "cleanup" {
+  for_each   = aws_ecr_repository.snowball
+  repository = each.value.name
+
+  policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Expire untagged images after 14 days"
+      selection = {
+        tagStatus   = "untagged"
+        countType   = "sinceImagePushed"
+        countUnit   = "days"
+        countNumber = 7
+      }
+      action = { type = "expire" }
+    }]
+  })
 }
 
 output "repository_urls" {
