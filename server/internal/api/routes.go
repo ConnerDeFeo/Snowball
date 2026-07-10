@@ -1,9 +1,20 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
+	analysispipeline "server/internal/analysis-pipeline"
+)
 
-func NewRouter() *http.ServeMux { // capital N — main needs to reach this
+// holds everything the handlers need to reach
+type API struct {
+	analysisPipeline *analysispipeline.Client
+}
+
+func NewRouter(apc *analysispipeline.Client) *http.ServeMux { // capital N — main needs to reach this
+	a := &API{analysisPipeline: apc}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", handleHealth)
+	mux.HandleFunc("POST /documents/{ticker}", a.handleDocuments)
 	return mux
 }
