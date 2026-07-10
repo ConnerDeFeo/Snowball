@@ -1,18 +1,25 @@
+# The different containers that will be running
 services:
   analysis-pipeline:
+    # defing the docker build
     build:
       context: ./analysis-pipeline
       dockerfile: dockerfile
+    # port exposure
     ports:
       - "8000:8000"
 
   server:
+    # Docker build
     build:
       context: ./server
       dockerfile: dockerfile
+    # port exposure
     ports:
       - "8080:8080"
+    # Server talks to analysis-pipeline through the internal docker network
     environment:
       PIPELINE_URL: "http://analysis-pipeline:8000"
+    # This container cannot run without analysis pipeline
     depends_on:
       - analysis-pipeline
