@@ -8,4 +8,4 @@ WORKDIR /app
 COPY . .
 
 # Run the server
-CMD ["go", "run", ".\cmd\orchestrator"]
+CMD ["go", "run", "./cmd/orchestrator"]
