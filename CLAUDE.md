@@ -39,9 +39,7 @@ fintech/quant-adjacent recruiting.
 
 **Services (2 containers now, a 3rd later):**
 - `server` (Go) — entry point / main orchestrator for all Snowball calls.
-  Handles pipeline coordination, scheduling, and concurrency. This is where
-  Go's concurrency strengths actually get used, and where deliberate Go
-  practice/reps live.
+  Handles pipeline coordination, scheduling, and concurrency.
 - `analysis-pipeline` (Python) — a single container covering Steps 1–3, organized as
   internal modules/packages rather than separate services:
   - `edgar/` — fetches filings via edgartools, extracts sections, caches to S3
