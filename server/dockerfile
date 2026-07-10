@@ -1,0 +1,11 @@
+# Use the golang image
+FROM golang:1.26.5-trixie
+
+# Work in the app directory
+WORKDIR /app
+
+# Copy over everything
+COPY . .
+
+# Run the server
+CMD ["go", "run", ".\cmd\orchestrator"]
