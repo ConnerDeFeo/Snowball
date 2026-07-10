@@ -6,8 +6,11 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "ok")
 	})
-	http.ListenAndServe(":8080", nil)
+
+	http.ListenAndServe(":8080", mux)
 }
