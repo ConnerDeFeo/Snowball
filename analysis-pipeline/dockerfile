@@ -6,9 +6,16 @@ WORKDIR /app
 COPY requirements.txt .
 # Pip install
 RUN pip install -r requirements.txt
-# Now copy everything else
+
+# Copy the application source
 COPY . .
-# Run server
+
+# Prep the entrypoint script
+RUN chmod +x /app/entrypoint.sh
+
+# Entrypoint now runs the script first (sets up secret env var, then execs CMD)
+ENTRYPOINT ["/app/entrypoint.sh"]
 CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:create_app()"]
+
 # The port its being exposed on, documentation really
 EXPOSE 8000

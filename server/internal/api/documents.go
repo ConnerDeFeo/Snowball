@@ -20,9 +20,9 @@ func (a *API) handleDocuments(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ticker := r.PathValue("ticker")
-
 	if err := a.analysisPipeline.GetDocuments(ticker, req.FromDate, req.ToDate); err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -30,4 +30,12 @@ func (a *API) handleDocuments(w http.ResponseWriter, r *http.Request) {
 		"status": "ok",
 		"ticker": ticker,
 	})
+}
+
+func (a *API) handleHealth(w http.ResponseWriter, r *http.Request) {
+	if err := a.analysisPipeline.Health(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

@@ -8,6 +8,8 @@ services:
     # port exposure
     ports:
       - "8000:8000"
+    secrets:
+      - EDGAR_IDENTITY
 
   server:
     # Docker build
@@ -23,3 +25,8 @@ services:
     # This container cannot run without analysis pipeline
     depends_on:
       - analysis-pipeline
+
+# Define relevant secrets needed
+secrets:
+  EDGAR_IDENTITY:
+    file: ./secrets/EDGAR_IDENTITY.txt

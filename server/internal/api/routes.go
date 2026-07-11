@@ -14,7 +14,11 @@ func NewRouter(apc *analysispipeline.Client) *http.ServeMux { // capital N — m
 	a := &API{analysisPipeline: apc}
 
 	mux := http.NewServeMux()
+	// Server routes
 	mux.HandleFunc("GET /health", handleHealth)
+
+	// Analysis pipeline routes
+	mux.HandleFunc("GET /analysis-pipeline/health", a.handleHealth)
 	mux.HandleFunc("POST /documents/{ticker}", a.handleDocuments)
 	return mux
 }

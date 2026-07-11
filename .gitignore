@@ -1,3 +1,4 @@
+secrets/
 # ===== Terraform =====
 *.tfstate
 *.tfstate.*
