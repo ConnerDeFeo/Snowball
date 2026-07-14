@@ -2,7 +2,6 @@
 services:
   analysis-pipeline:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:081c007
-    # no published port — server reaches it over the internal network
     restart: unless-stopped
     secrets:
       - EDGAR_IDENTITY
@@ -10,7 +9,7 @@ services:
   orchestrator:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:a26ee96
     ports:
-      - "8080:8080"          # the only thing the outside world hits
+      - "8080:8080"
     environment:
       PIPELINE_URL: "http://analysis-pipeline:8000"
     depends_on:
