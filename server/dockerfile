@@ -9,3 +9,6 @@ COPY . .
 
 # Run the server
 CMD ["go", "run", "./cmd/orchestrator"]
+
+# Exposure to 8080
+EXPOSE 8080
