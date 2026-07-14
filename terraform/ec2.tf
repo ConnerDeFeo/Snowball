@@ -19,7 +19,7 @@ data "aws_subnets" "default" {
   }
 }
 
-resource "aws_iam_role" "ec2_s3" {
+resource "aws_iam_role" "snowball_iam" {
   name = "snowball-ec2-s3-role"
 
   assume_role_policy = jsonencode({
@@ -33,18 +33,23 @@ resource "aws_iam_role" "ec2_s3" {
 }
 
 resource "aws_iam_role_policy_attachment" "ec2_s3_full_access" {
-  role       = aws_iam_role.ec2_s3.name
+  role       = aws_iam_role.snowball_iam.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
 }
 
 resource "aws_iam_role_policy_attachment" "ec2_ssm" {
-  role       = aws_iam_role.ec2_s3.name
+  role       = aws_iam_role.snowball_iam.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-resource "aws_iam_instance_profile" "ec2_s3" {
+resource "aws_iam_role_policy_attachment" "ecr_read_only" {
+  role       = aws_iam_role.snowball_iam.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+resource "aws_iam_instance_profile" "snowball_iam_profile" {
   name = "snowball-ec2-s3-profile"
-  role = aws_iam_role.ec2_s3.name
+  role = aws_iam_role.snowball_iam.name
 }
 
 resource "aws_security_group" "ec2" {
@@ -93,8 +98,14 @@ resource "aws_instance" "snowball" {
   instance_type               = "t3.small"
   subnet_id                   = data.aws_subnets.default.ids[0]
   vpc_security_group_ids      = [aws_security_group.ec2.id]
-  iam_instance_profile        = aws_iam_instance_profile.ec2_s3.name
+  iam_instance_profile        = aws_iam_instance_profile.snowball_iam_profile.name
   associate_public_ip_address = true
+
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"   # IMDSv2 only, good practice
+    http_put_response_hop_limit = 2            # <-- the fix
+  }
 
   tags = {
     Name = "snowball"
