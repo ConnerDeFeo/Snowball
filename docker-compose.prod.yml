@@ -1,0 +1,22 @@
+# docker-compose.prod.yml — run this one on EC2
+services:
+  analysis-pipeline:
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:081c007
+    # no published port — server reaches it over the internal network
+    restart: unless-stopped
+    secrets:
+      - EDGAR_IDENTITY
+
+  orchestrator:
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:a26ee96
+    ports:
+      - "8080:8080"          # the only thing the outside world hits
+    environment:
+      PIPELINE_URL: "http://analysis-pipeline:8000"
+    depends_on:
+      - analysis-pipeline
+    restart: unless-stopped
+
+secrets:
+  EDGAR_IDENTITY:
+    file: ./secrets/EDGAR_IDENTITY.txt
