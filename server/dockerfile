@@ -1,14 +1,29 @@
-# Use the golang image
-FROM golang:1.26.5-trixie AS build
+# ---- Build stage ----
+FROM golang:1.26.5-trixie AS builder
 
-# Work in the app directory
 WORKDIR /app
 
-# Copy over everything
+# Copy dependency files first, download deps — separate layer so this
+# only re-runs when go.mod/go.sum change, not on every code edit
+COPY go.mod ./
+RUN go mod download
+
+# Now copy the rest of the source
 COPY . .
 
-# Run the server
-CMD ["go", "run", "./cmd/orchestrator"]
+# Keep c libraries static, build to orchestrator file in given location
+RUN CGO_ENABLED=0 go build -o orchestrator ./cmd/orchestrator
 
-# Exposure to 8080
+# ---- Runtime stage ----
+# Take the minimal linux distrabution needed
+FROM debian:trixie-slim
+
+WORKDIR /app
+
+# Only the compiled binary from the build stage
+COPY --from=builder /app/orchestrator .
+
 EXPOSE 8080
+
+# Run the orchestrator binary from the copy
+CMD ["./orchestrator"]
