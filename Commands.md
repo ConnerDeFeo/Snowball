@@ -11,4 +11,6 @@ docker tag (DockerImage):latest 857360184083.dkr.ecr.us-east-2.amazonaws.com/sno
 docker push 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/(DockerImage):$tag
 
 ### Pull Docker Image from ECR
-docker pull 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:<tag>
+docker pull 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/(DockerImage):<tag>
+
+### Run Docker Images (AML)

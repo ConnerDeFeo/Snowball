@@ -1,5 +1,5 @@
 # Use the golang image
-FROM golang:1.26.5-trixie
+FROM golang:1.26.5-trixie AS build
 
 # Work in the app directory
 WORKDIR /app
