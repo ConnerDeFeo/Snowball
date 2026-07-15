@@ -11,7 +11,7 @@ services:
   orchestrator:
     # Docker build
     build:
-      context: ./server
+      context: ./orchestrator
       dockerfile: dockerfile
     # port exposure
     ports:
