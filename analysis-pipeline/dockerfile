@@ -18,7 +18,7 @@ RUN chmod +x /app/entrypoint.sh
 
 # Entrypoint now runs the script first (sets up secret env var, then execs CMD)
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "app:create_app()"]
+CMD ["gunicorn", "-w", "4", "--timeout", "300", "-b", "0.0.0.0:8000", "app:create_app()"]
 
 # The port its being exposed on, documentation really
 EXPOSE 8000
