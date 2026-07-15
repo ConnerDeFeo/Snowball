@@ -42,13 +42,6 @@ fintech/quant-adjacent recruiting.
   Handles pipeline coordination, scheduling, and concurrency.
 - `analysis-pipeline` (Python) — a single container covering Steps 1–3, organized as
   internal modules/packages rather than separate services:
-  - `edgar/` — fetches filings via edgartools, extracts sections, caches to S3
-  - `scoring/` — scores cached sections against the 10-category rubric via Bedrock
-  - `model/` — scikit-learn model, predicts FCF from rubric scores
-  - These run sequentially per company anyway (can't score a filing you
-    haven't fetched, can't predict from scores that don't exist yet), so
-    there's no independent-scaling or fault-isolation reason to split them
-    into separate deployable services. See "Why only 2 containers" below.
 - `review-pipeline` (Python + LangChain, **future**, Step 4) — kept as its
   own separate service once built. Unlike Steps 1–3, this is *queried*
   on-demand rather than run as a sequential batch step, and could plausibly
