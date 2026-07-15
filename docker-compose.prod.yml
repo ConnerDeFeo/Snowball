@@ -5,6 +5,8 @@ services:
     restart: unless-stopped
     secrets:
       - EDGAR_IDENTITY
+    environment:
+      - ENV PYTHONUNBUFFERED=1
 
   orchestrator:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:e1ff471
