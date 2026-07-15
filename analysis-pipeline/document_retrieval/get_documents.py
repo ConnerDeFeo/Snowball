@@ -1,9 +1,12 @@
 import asyncio
 import json
+import logging
 import threading
 from document_retrieval.FetchDocuments import FetchDocuments
 from document_retrieval.FormType import FormType
 from utils.s3 import store
+
+logger = logging.getLogger(__name__)
 
 # Bounded to stay comfortably under SEC EDGAR's ~10 req/s fair-access guidance
 # while still overlapping the many per-filing downloads for a wide date range.
@@ -13,7 +16,10 @@ MAX_FETCH_WORKERS = 8
 def _period_key(report) -> str:
     """Best-effort period string (YYYY-MM-DD) for a filing/report, falling
     back to filing_date when period_of_report is unavailable."""
-    return report.period_of_report or report.filing_date
+    period = report.period_of_report or report.filing_date
+    if hasattr(period, "isoformat"):
+        return period.isoformat()
+    return str(period)
 
 
 def _year(period: str) -> str:
@@ -57,25 +63,25 @@ def _store_proxy(tckr: str, filing):
 def _process_10k(tckr: str, filing):
     """Download (filing.obj()) then store a single 10-K. Runs in a worker thread."""
     thread_name = threading.current_thread().name
-    print(f"[{thread_name}] START  10-K  {tckr}  filed {filing.filing_date}")
+    logger.info("[%s] START  10-K  %s  filed %s", thread_name, tckr, filing.filing_date)
     _store_10k(tckr, filing.obj())
-    print(f"[{thread_name}] DONE   10-K  {tckr}  filed {filing.filing_date}")
+    logger.info("[%s] DONE   10-K  %s  filed %s", thread_name, tckr, filing.filing_date)
 
 
 def _process_10q(tckr: str, filing):
     """Download (filing.obj()) then store a single 10-Q. Runs in a worker thread."""
     thread_name = threading.current_thread().name
-    print(f"[{thread_name}] START  10-Q  {tckr}  filed {filing.filing_date}")
+    logger.info("[%s] START  10-Q  %s  filed %s", thread_name, tckr, filing.filing_date)
     _store_10q(tckr, filing.obj())
-    print(f"[{thread_name}] DONE   10-Q  {tckr}  filed {filing.filing_date}")
+    logger.info("[%s] DONE   10-Q  %s  filed %s", thread_name, tckr, filing.filing_date)
 
 
 def _process_proxy(tckr: str, filing):
     """Download (filing.text()) then store a single proxy. Runs in a worker thread."""
     thread_name = threading.current_thread().name
-    print(f"[{thread_name}] START  PROXY {tckr}  filed {filing.filing_date}")
+    logger.info("[%s] START  PROXY %s  filed %s", thread_name, tckr, filing.filing_date)
     _store_proxy(tckr, filing)
-    print(f"[{thread_name}] DONE   PROXY {tckr}  filed {filing.filing_date}")
+    logger.info("[%s] DONE   PROXY %s  filed %s", thread_name, tckr, filing.filing_date)
 
 
 async def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
@@ -102,8 +108,10 @@ async def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
     proxy_filings = fetcher.fetch_multiple_proxy(from_date, to_date)
 
     total = len(tenk_filings) + len(tenq_filings) + len(proxy_filings)
-    print(f"[pool] START  {tckr}  spawning {total} filing thread(s) "
-          f"({len(tenk_filings)} 10-K, {len(tenq_filings)} 10-Q, {len(proxy_filings)} proxy)")
+    logger.info(
+        "[pool] START  %s  spawning %d filing thread(s) (%d 10-K, %d 10-Q, %d proxy)",
+        tckr, total, len(tenk_filings), len(tenq_filings), len(proxy_filings),
+    )
 
     # Cap concurrent worker threads at MAX_FETCH_WORKERS (same bound the old
     # ThreadPoolExecutor enforced) since asyncio.to_thread() alone would run
@@ -121,6 +129,6 @@ async def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
 
     await asyncio.gather(*tasks)  # re-raises first failure
 
-    print(f"[pool] DONE   {tckr}  all {total} filing thread(s) completed")
+    logger.info("[pool] DONE   %s  all %d filing thread(s) completed", tckr, total)
 
     return True
