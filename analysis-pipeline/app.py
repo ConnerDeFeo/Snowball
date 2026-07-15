@@ -1,20 +1,14 @@
 # app.py
-from flask import Flask
-from routes.document_retrieval import document_retrieval_bp
-from routes.health import health_bp
-from config import Config
+from fastapi import FastAPI
+from routes.document_retrieval import router as document_retrieval_router
+from routes.health import router as health_router
 
-def create_app(config_class=Config):
-    app = Flask(__name__)
-    app.config.from_object(config_class)
+def create_app():
+    app = FastAPI()
 
-    app.register_blueprint(document_retrieval_bp)
-    app.register_blueprint(health_bp)
+    app.include_router(document_retrieval_router)
+    app.include_router(health_router)
 
     return app
 
-if __name__ == "__main__":
-    app = create_app()
-    app.run()
-
-
+app = create_app()

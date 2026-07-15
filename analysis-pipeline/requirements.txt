@@ -1,5 +1,9 @@
-Flask
-edgartools
-python-dotenv
-boto3
+fastapi
+uvicorn[standard]
 gunicorn
+pydantic
+boto3
+edgartools
+python-multipart
+python-dotenv
+

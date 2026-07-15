@@ -1,6 +1,6 @@
+import asyncio
 import json
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from document_retrieval.FetchDocuments import FetchDocuments
 from document_retrieval.FormType import FormType
 from utils.s3 import store
@@ -78,7 +78,7 @@ def _process_proxy(tckr: str, filing):
     print(f"[{thread_name}] DONE   PROXY {tckr}  filed {filing.filing_date}")
 
 
-def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
+async def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
     """
     Fetch every 10-K, 10-Q, and DEF 14A proxy statement for `tckr` filed within
     [from_date, to_date] and cache them to S3.
@@ -105,14 +105,21 @@ def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
     print(f"[pool] START  {tckr}  spawning {total} filing thread(s) "
           f"({len(tenk_filings)} 10-K, {len(tenq_filings)} 10-Q, {len(proxy_filings)} proxy)")
 
-    with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
-        futures = []
-        futures += [executor.submit(_process_10k, tckr, f) for f in tenk_filings]
-        futures += [executor.submit(_process_10q, tckr, f) for f in tenq_filings]
-        futures += [executor.submit(_process_proxy, tckr, f) for f in proxy_filings]
+    # Cap concurrent worker threads at MAX_FETCH_WORKERS (same bound the old
+    # ThreadPoolExecutor enforced) since asyncio.to_thread() alone would run
+    # against the default executor's much larger thread limit.
+    sem = asyncio.Semaphore(MAX_FETCH_WORKERS)
 
-        for future in as_completed(futures):
-            future.result()  # re-raise first failure
+    async def _run(fn, filing):
+        async with sem:
+            await asyncio.to_thread(fn, tckr, filing)
+
+    tasks = []
+    tasks += [_run(_process_10k, f) for f in tenk_filings]
+    tasks += [_run(_process_10q, f) for f in tenq_filings]
+    tasks += [_run(_process_proxy, f) for f in proxy_filings]
+
+    await asyncio.gather(*tasks)  # re-raises first failure
 
     print(f"[pool] DONE   {tckr}  all {total} filing thread(s) completed")
 

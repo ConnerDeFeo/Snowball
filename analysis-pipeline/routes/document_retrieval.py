@@ -1,24 +1,31 @@
-from flask import Blueprint, jsonify, request
+from typing import Optional
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 from document_retrieval.get_documents import get_documents
 
-document_retrieval_bp = Blueprint("document_retrieval_bp", __name__)
+router = APIRouter()
 
 MAX_YEARS = 6
 
-@document_retrieval_bp.route("/documents/<tckr>", methods=["POST"])
-def documents(tckr):
-    data = request.get_json() or {}
-    from_date = data.get("from_date")
-    to_date = data.get("to_date")
+
+class DocumentsRequest(BaseModel):
+    from_date: Optional[str] = None
+    to_date: Optional[str] = None
+
+
+@router.post("/documents/{tckr}")
+async def documents(tckr: str, body: DocumentsRequest):
+    from_date = body.from_date
+    to_date = body.to_date
     if not from_date or not to_date:
-        return jsonify({"error": "from_date and to_date are required"}), 400
+        raise HTTPException(status_code=400, detail="from_date and to_date are required")
 
     from_year, to_year = int(from_date[:4]), int(to_date[:4])
     if to_year < from_year or to_year - from_year >= MAX_YEARS:
-        return jsonify({"error": f"date range may span at most {MAX_YEARS} years"}), 400
+        raise HTTPException(status_code=400, detail=f"date range may span at most {MAX_YEARS} years")
 
-    found = get_documents(tckr, from_date, to_date)
+    found = await get_documents(tckr, from_date, to_date)
     if not found:
-        return jsonify({"error": f"no company found for ticker: {tckr}"}), 404
+        raise HTTPException(status_code=404, detail=f"no company found for ticker: {tckr}")
 
-    return jsonify({"status": "ok", "ticker": tckr}), 200
+    return {"status": "ok", "ticker": tckr}
