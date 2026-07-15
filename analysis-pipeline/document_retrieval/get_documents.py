@@ -1,4 +1,5 @@
 import json
+import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from document_retrieval.FetchDocuments import FetchDocuments
 from document_retrieval.FormType import FormType
@@ -55,17 +56,26 @@ def _store_proxy(tckr: str, filing):
 
 def _process_10k(tckr: str, filing):
     """Download (filing.obj()) then store a single 10-K. Runs in a worker thread."""
+    thread_name = threading.current_thread().name
+    print(f"[{thread_name}] START  10-K  {tckr}  filed {filing.filing_date}")
     _store_10k(tckr, filing.obj())
+    print(f"[{thread_name}] DONE   10-K  {tckr}  filed {filing.filing_date}")
 
 
 def _process_10q(tckr: str, filing):
     """Download (filing.obj()) then store a single 10-Q. Runs in a worker thread."""
+    thread_name = threading.current_thread().name
+    print(f"[{thread_name}] START  10-Q  {tckr}  filed {filing.filing_date}")
     _store_10q(tckr, filing.obj())
+    print(f"[{thread_name}] DONE   10-Q  {tckr}  filed {filing.filing_date}")
 
 
 def _process_proxy(tckr: str, filing):
     """Download (filing.text()) then store a single proxy. Runs in a worker thread."""
+    thread_name = threading.current_thread().name
+    print(f"[{thread_name}] START  PROXY {tckr}  filed {filing.filing_date}")
     _store_proxy(tckr, filing)
+    print(f"[{thread_name}] DONE   PROXY {tckr}  filed {filing.filing_date}")
 
 
 def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
@@ -91,6 +101,10 @@ def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
     tenq_filings = fetcher.fetch_multiple_10q(from_date, to_date)
     proxy_filings = fetcher.fetch_multiple_proxy(from_date, to_date)
 
+    total = len(tenk_filings) + len(tenq_filings) + len(proxy_filings)
+    print(f"[pool] START  {tckr}  spawning {total} filing thread(s) "
+          f"({len(tenk_filings)} 10-K, {len(tenq_filings)} 10-Q, {len(proxy_filings)} proxy)")
+
     with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
         futures = []
         futures += [executor.submit(_process_10k, tckr, f) for f in tenk_filings]
@@ -99,5 +113,7 @@ def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
 
         for future in as_completed(futures):
             future.result()  # re-raise first failure
+
+    print(f"[pool] DONE   {tckr}  all {total} filing thread(s) completed")
 
     return True
