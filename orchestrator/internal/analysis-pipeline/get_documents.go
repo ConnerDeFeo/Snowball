@@ -39,7 +39,7 @@ func (c *Client) GetDocuments(ticker, fromDate, toDate string) error {
 	case http.StatusNotFound:
 		return fmt.Errorf("no company found for ticker: %s", ticker)
 	case http.StatusBadRequest:
-		return fmt.Errorf("pipeline rejected request: from_date and to_date required")
+		return fmt.Errorf("pipeline rejected request: from_date and to_date required and must be 6 year gap maximum")
 	default:
 		return fmt.Errorf("pipeline returned unexpected status: %d", resp.StatusCode)
 	}
