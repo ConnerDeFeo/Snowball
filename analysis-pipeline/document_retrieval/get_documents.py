@@ -1,8 +1,12 @@
 import json
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from document_retrieval.FetchDocuments import FetchDocuments
 from document_retrieval.FormType import FormType
 from utils.s3 import store
+
+# Bounded to stay comfortably under SEC EDGAR's ~10 req/s fair-access guidance
+# while still overlapping the many per-filing downloads for a wide date range.
+MAX_FETCH_WORKERS = 8
 
 
 def _period_key(report) -> str:
@@ -49,6 +53,21 @@ def _store_proxy(tckr: str, filing):
     store(key, (filing.text() or "").encode("utf-8"))
 
 
+def _process_10k(tckr: str, filing):
+    """Download (filing.obj()) then store a single 10-K. Runs in a worker thread."""
+    _store_10k(tckr, filing.obj())
+
+
+def _process_10q(tckr: str, filing):
+    """Download (filing.obj()) then store a single 10-Q. Runs in a worker thread."""
+    _store_10q(tckr, filing.obj())
+
+
+def _process_proxy(tckr: str, filing):
+    """Download (filing.text()) then store a single proxy. Runs in a worker thread."""
+    _store_proxy(tckr, filing)
+
+
 def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
     """
     Fetch every 10-K, 10-Q, and DEF 14A proxy statement for `tckr` filed within
@@ -65,17 +84,20 @@ def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
     if fetcher is None:
         return False
 
-    tenks = fetcher.fetch_multiple_10k(from_date, to_date)
-    tenqs = fetcher.fetch_multiple_10q(from_date, to_date)
-    proxies = fetcher.fetch_multiple_proxy(from_date, to_date)
+    # These list/filter calls are lightweight index lookups, not downloads —
+    # the actual filing content is fetched lazily inside the worker threads
+    # below, so all the slow network I/O runs in parallel.
+    tenk_filings = fetcher.fetch_multiple_10k(from_date, to_date)
+    tenq_filings = fetcher.fetch_multiple_10q(from_date, to_date)
+    proxy_filings = fetcher.fetch_multiple_proxy(from_date, to_date)
 
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=MAX_FETCH_WORKERS) as executor:
         futures = []
-        futures += [executor.submit(_store_10k, tckr, report) for report in tenks]
-        futures += [executor.submit(_store_10q, tckr, report) for report in tenqs]
-        futures += [executor.submit(_store_proxy, tckr, filing) for filing in proxies]
+        futures += [executor.submit(_process_10k, tckr, f) for f in tenk_filings]
+        futures += [executor.submit(_process_10q, tckr, f) for f in tenq_filings]
+        futures += [executor.submit(_process_proxy, tckr, f) for f in proxy_filings]
 
-        for future in futures:
-            future.result()
+        for future in as_completed(futures):
+            future.result()  # re-raise first failure
 
     return True

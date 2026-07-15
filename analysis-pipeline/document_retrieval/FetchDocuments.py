@@ -35,9 +35,10 @@ class FetchDocuments:
         return self._get_relevant_year(year, filings)
 
     def fetch_multiple_10k(self, from_date: str, to_date: str):
+        """Return filing handles (not yet downloaded) within [from_date, to_date]."""
         filings = self.company.get_filings(form=FormType.TEN_K.value).filter(date=f"{from_date}:{to_date}")
 
-        return [f.obj() for f in filings]
+        return list(filings)
 
     # 10q Retrieval
     def fetch_10q(self, year: int, quarter: int):
@@ -50,9 +51,10 @@ class FetchDocuments:
         return self._get_relevant_year(year, filings)
     
     def fetch_multiple_10q(self, from_date: str, to_date: str):
+        """Return filing handles (not yet downloaded) within [from_date, to_date]."""
         filings = self.company.get_filings(form=FormType.TEN_Q.value).filter(date=f"{from_date}:{to_date}")
 
-        return [f.obj() for f in filings]
+        return list(filings)
 
     # Proxy Retrieval
     def fetch_proxy(self, year: int):
