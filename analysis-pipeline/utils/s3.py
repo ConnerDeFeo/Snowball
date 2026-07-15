@@ -1,6 +1,6 @@
 import boto3
 
-BUCKET_NAME = "snowball-bucket"
+BUCKET_NAME = "snowball-documents-bucket"
 client = boto3.client('s3')
 
 def store(key: str, body: bytes):
