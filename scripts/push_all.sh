@@ -13,5 +13,5 @@ images=(
 project_root=".."
  
 for repo_name in "${images[@]}"; do
-    ./push_ecr.sh "$repo_name"
+    ./scripts/push_ecr.sh "$repo_name"
 done
