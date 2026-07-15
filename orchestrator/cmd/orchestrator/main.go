@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"os"
 
-	analysispipeline "server/internal/analysis-pipeline"
-	"server/internal/api"
+	analysispipeline "orchestrator/internal/analysis-pipeline"
+	"orchestrator/internal/api"
 )
 
 func main() {

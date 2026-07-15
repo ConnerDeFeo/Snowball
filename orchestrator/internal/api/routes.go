@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-	analysispipeline "server/internal/analysis-pipeline"
+	analysispipeline "orchestrator/internal/analysis-pipeline"
 )
 
 // holds everything the handlers need to reach
