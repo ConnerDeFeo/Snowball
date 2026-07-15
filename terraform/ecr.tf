@@ -21,11 +21,12 @@ resource "aws_ecr_lifecycle_policy" "cleanup" {
   policy = jsonencode({
     rules = [{
       rulePriority = 1
-      description  = "Keep only the last 10 tagged images"
+      description  = "Expire untagged images after 14 days"
       selection = {
-        tagStatus   = "any"
-        countType   = "imageCountMoreThan"
-        countNumber = 10
+        tagStatus   = "untagged"
+        countType   = "sinceImagePushed"
+        countUnit   = "days"
+        countNumber = 7
       }
       action = { type = "expire" }
     }]
