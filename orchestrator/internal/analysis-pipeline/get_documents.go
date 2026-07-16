@@ -1,46 +1,20 @@
 package analysispipeline
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
+
+	"github.com/gorilla/websocket"
 )
 
-// Function for client to get Documents
-func (c *Client) GetDocuments(ticker, fromDate, toDate string) error {
-	reqBody := docRequest{
-		FromDate: fromDate,
-		ToDate:   toDate,
-	}
+// DialDocuments opens a websocket to the analysis-pipeline's document
+// retrieval endpoint for `ticker`. Caller owns the returned connection.
+func (c *Client) DialDocuments(ticker string) (*websocket.Conn, error) {
+	url := c.wsURL + "/documents/" + ticker
 
-	//convert data to bytes
-	data, err := json.Marshal(reqBody)
-
-	// Error occured, stop
+	// Opens ws wioth connection stream
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
-		return fmt.Errorf("encoding request body: %w", err)
+		return nil, fmt.Errorf("dialing pipeline: %w", err)
 	}
-
-	// base url for the current client class including the tckr passed down
-	url := c.baseURL + "/documents/" + ticker
-
-	resp, err := http.Post(url, "application/json", bytes.NewReader(data))
-	if err != nil {
-		return fmt.Errorf("calling pipeline: %w", err)
-	}
-	// Close response stream
-	defer resp.Body.Close()
-
-	// Check status code
-	switch resp.StatusCode {
-	case http.StatusOK:
-		return nil
-	case http.StatusNotFound:
-		return fmt.Errorf("no company found for ticker: %s", ticker)
-	case http.StatusBadRequest:
-		return fmt.Errorf("pipeline rejected request: from_date and to_date required and must be 6 year gap maximum")
-	default:
-		return fmt.Errorf("pipeline returned unexpected status: %d", resp.StatusCode)
-	}
+	return conn, nil
 }

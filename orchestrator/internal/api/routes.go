@@ -12,15 +12,16 @@ type API struct {
 
 func NewRouter(apc *analysispipeline.Client) *http.ServeMux {
 
+	// Create API struct
 	a := &API{analysisPipeline: apc}
 	mux := http.NewServeMux()
 
 	// Server routes
 	mux.HandleFunc("GET /health", handleHealth)
-	mux.HandleFunc("GET /ws", handleWebSocket)
 
-	// Analysis pipeline routes
+	// Analysis pipeline routes //
 	mux.HandleFunc("GET /analysis-pipeline/health", a.handleHealth)
-	mux.HandleFunc("POST /documents/{ticker}", a.handleDocuments)
+	// Websocket connections
+	mux.HandleFunc("GET /documents/{ticker}", a.handleDocuments)
 	return mux
 }

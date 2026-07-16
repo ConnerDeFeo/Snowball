@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import threading
+from typing import Awaitable, Callable, Optional
 from document_retrieval.FetchDocuments import FetchDocuments
 from document_retrieval.FormType import FormType
 from utils.s3 import store
@@ -84,7 +85,13 @@ def _process_proxy(tckr: str, filing):
     logger.info("[%s] DONE   PROXY %s  filed %s", thread_name, tckr, filing.filing_date)
 
 
-async def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
+async def get_documents(
+    tckr: str,
+    from_date: str,
+    to_date: str,
+    # Callabe function that takes dict param and returns awaitable nothing
+    on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
+) -> bool:
     """
     Fetch every 10-K, 10-Q, and DEF 14A proxy statement for `tckr` filed within
     [from_date, to_date] and cache them to S3.
@@ -93,6 +100,10 @@ async def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
       filings/<tckr>/10-K/<year>/<section>.txt (+ sections.json)
       filings/<tckr>/10-Q/<year>/Q<n>/<section>.txt (+ sections.json)
       filings/<tckr>/DEF 14A/<year>/proxy.txt
+
+    If `on_progress` is given, it's awaited with a "start" event before any
+    downloads begin and a "progress" event after each filing completes —
+    lets a caller (e.g. a websocket route) stream progress to a client.
 
     Returns False if `tckr` could not be resolved to a company, True otherwise.
     """
@@ -107,25 +118,46 @@ async def get_documents(tckr: str, from_date: str, to_date: str) -> bool:
     tenq_filings = fetcher.fetch_multiple_10q(from_date, to_date)
     proxy_filings = fetcher.fetch_multiple_proxy(from_date, to_date)
 
-    total = len(tenk_filings) + len(tenq_filings) + len(proxy_filings)
+    counts = {
+        FormType.TEN_K.value: len(tenk_filings),
+        FormType.TEN_Q.value: len(tenq_filings),
+        FormType.PROXY.value: len(proxy_filings),
+    }
+    total = sum(counts.values())
     logger.info(
         "[pool] START  %s  spawning %d filing thread(s) (%d 10-K, %d 10-Q, %d proxy)",
-        tckr, total, len(tenk_filings), len(tenq_filings), len(proxy_filings),
+        tckr, total, counts[FormType.TEN_K.value], counts[FormType.TEN_Q.value], counts[FormType.PROXY.value],
     )
 
-    # Cap concurrent worker threads at MAX_FETCH_WORKERS (same bound the old
-    # ThreadPoolExecutor enforced) since asyncio.to_thread() alone would run
-    # against the default executor's much larger thread limit.
-    sem = asyncio.Semaphore(MAX_FETCH_WORKERS)
+    # Function handed down that 
+    if on_progress:
+        await on_progress({"type": "start", "total": total, "counts": counts})
 
-    async def _run(fn, filing):
+    # Cap concurrent worker threads to MAX_FETCH_WORKERS
+    sem = asyncio.Semaphore(MAX_FETCH_WORKERS)
+    completed = 0
+
+    async def _run(fn, filing, form: str):
+        nonlocal completed
+        # Await semephore lock
         async with sem:
+            # Complete task
             await asyncio.to_thread(fn, tckr, filing)
+        # If update progress function given, update client
+        if on_progress:
+            completed += 1
+            await on_progress({
+                "type": "progress",
+                "completed": completed,
+                "total": total,
+                "form": form,
+                "filing_date": str(filing.filing_date),
+            })
 
     tasks = []
-    tasks += [_run(_process_10k, f) for f in tenk_filings]
-    tasks += [_run(_process_10q, f) for f in tenq_filings]
-    tasks += [_run(_process_proxy, f) for f in proxy_filings]
+    tasks += [_run(_process_10k, f, FormType.TEN_K.value) for f in tenk_filings]
+    tasks += [_run(_process_10q, f, FormType.TEN_Q.value) for f in tenq_filings]
+    tasks += [_run(_process_proxy, f, FormType.PROXY.value) for f in proxy_filings]
 
     await asyncio.gather(*tasks)  # re-raises first failure
 
