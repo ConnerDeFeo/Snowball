@@ -17,6 +17,7 @@ func NewRouter(apc *analysispipeline.Client) *http.ServeMux {
 
 	// Server routes
 	mux.HandleFunc("GET /health", handleHealth)
+	mux.HandleFunc("GET /ws", handleWebSocket)
 
 	// Analysis pipeline routes
 	mux.HandleFunc("GET /analysis-pipeline/health", a.handleHealth)

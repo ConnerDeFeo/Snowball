@@ -15,18 +15,22 @@ type documentRequest struct {
 func (a *API) handleDocuments(w http.ResponseWriter, r *http.Request) {
 
 	var req documentRequest
+	// Decode body to json stream, write contents to request structure
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid JSON body", http.StatusBadRequest)
 		return
 	}
 
+	// Get ticker from the url
 	ticker := r.PathValue("ticker")
+	// Fetch documetns from analysis-pipeline
 	if err := a.analysisPipeline.GetDocuments(ticker, req.FromDate, req.ToDate); err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
+	// Send back map encoded map --> json with resp
 	json.NewEncoder(w).Encode(map[string]string{
 		"status": "ok",
 		"ticker": ticker,
