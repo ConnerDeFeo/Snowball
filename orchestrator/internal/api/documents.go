@@ -64,8 +64,8 @@ func (a *API) handleDocuments(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	go pump(conn, client) // browser -> pipeline goroutine
-	go pump(client, conn) // pipeline -> browser goroutine
+	go pump(conn, client) // browser -> pipeline | goroutine
+	go pump(client, conn) // pipeline -> browser | goroutine
 
 	<-done // Wait for signal from either connection
 }
