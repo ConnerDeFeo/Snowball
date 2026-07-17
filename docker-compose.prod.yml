@@ -6,7 +6,7 @@ services:
     secrets:
       - EDGAR_IDENTITY
     environment:
-      - PYTHONUNBUFFERED=1
+      - AWS_DEFAULT_REGION=us-east-2
 
   orchestrator:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:a614bdf
