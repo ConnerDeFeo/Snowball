@@ -3,6 +3,7 @@ JSON-serializable dict, grouped by data tier."""
 
 import math
 from datetime import date, datetime
+from decimal import Decimal
 
 
 def _safe(fn):
@@ -24,11 +25,22 @@ def _jsonable(value):
         return None
     if isinstance(value, (datetime, date)):
         return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
     if hasattr(value, "item"):  # numpy scalar
         return value.item()
     if hasattr(value, "isoformat"):  # pandas Timestamp
         return value.isoformat()
     return value
+
+
+def _coerce(value):
+    """Recursively apply _jsonable across a nested dict/list structure."""
+    if isinstance(value, dict):
+        return {k: _coerce(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_coerce(v) for v in value]
+    return _jsonable(value)
 
 
 def _df(df):
@@ -40,7 +52,7 @@ def _df(df):
 
 
 def build_proxy_data(proxy) -> dict:
-    return {
+    return _coerce({
         "metadata": {
             "form": _safe(lambda: proxy.form),
             "filing_date": _safe(lambda: _jsonable(proxy.filing_date)),
@@ -71,4 +83,4 @@ def build_proxy_data(proxy) -> dict:
         "governance": {
             "insider_trading_policy_adopted": _safe(lambda: proxy.insider_trading_policy_adopted),
         },
-    }
+    })
