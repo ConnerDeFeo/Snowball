@@ -5,6 +5,7 @@ import threading
 from typing import Awaitable, Callable, Optional
 from document_retrieval.FetchDocuments import FetchDocuments
 from document_retrieval.FormType import FormType
+from document_retrieval.ProxyData import build_proxy_data
 from utils.s3 import store
 from utils import dynamo
 
@@ -58,8 +59,10 @@ def _store_10q(tckr: str, report):
 
 def _store_proxy(tckr: str, filing):
     year = _year(_period_key(filing))
-    key = f"filings/{tckr}/{FormType.PROXY.value}/{year}/proxy.txt"
-    store(key, (filing.text() or "").encode("utf-8"))
+    base = f"filings/{tckr}/{FormType.PROXY.value}/{year}"
+    store(f"{base}/proxy.txt", (filing.text() or "").encode("utf-8"))
+    data = build_proxy_data(filing.obj())
+    store(f"{base}/data.json", json.dumps(data).encode("utf-8"))
 
 
 def _process_10k(tckr: str, filing):
