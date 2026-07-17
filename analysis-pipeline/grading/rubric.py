@@ -1,13 +1,68 @@
-from enum import Enum
+from RubricCategories import RubricCategories
 
-class RubricCategories(Enum):
-    REVANUE = "Revenue durability & quality"
-    CONCENTRATION = "Customer & supplier concentration"
-    GROSS_MARGIN = "Gross margin level & stability"
-    MOAT = "Competitive moat / ROIC persistence"
-    CAPITAL_BURDENS = "Capital intensity & reinvestment burden"
-    EARNINGS_QUALITY= "Earnings quality / cash conversion"
-    CAP_ALLOC = "Management & capital allocation"
-    BALANCE_SHEET = "Balance sheet resilience"
-    INDUSTRY_STRUCT = "Industry structure"
-    ACCOUNTING_STANDARDS = "Accounting standards"
+BASE_INSTRUCTIONS = """
+    
+"""
+
+RUBRIC = {
+    RubricCategories.REVANUE : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+    RubricCategories.CONCENTRATION : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+    RubricCategories.GROSS_MARGIN : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+    RubricCategories.MOAT : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+    RubricCategories.CAPITAL_BURDENS : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+    RubricCategories.EARNINGS_QUALITY : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+    RubricCategories.CAP_ALLOC : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+    RubricCategories.BALANCE_SHEET : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+    RubricCategories.INDUSTRY_STRUCT : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+    RubricCategories.ACCOUNTING_STANDARDS : {
+        "locations" : [
+            # All areas where this can be found
+        ],
+        "directions": "" # What the model needs to do with the context
+    },
+}
