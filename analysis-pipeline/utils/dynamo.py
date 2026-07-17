@@ -1,6 +1,6 @@
 import boto3
 
-TABLE_NAME = "snowball-documents"
+TABLE_NAME = "snowball_documents"
 table = boto3.resource('dynamodb').Table(TABLE_NAME)
 
 def put(accession: str, **fields):
