@@ -8,3 +8,24 @@ resource "aws_dynamodb_table" "snowball_documents" {
     type = "S"
   }
 }
+
+resource "aws_iam_role_policy" "ec2_dynamodb_documents" {
+  name = "snowball-ec2-dynamodb-documents"
+  role = aws_iam_role.snowball_iam.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan",
+      ]
+      Resource = aws_dynamodb_table.snowball_documents.arn
+    }]
+  })
+}

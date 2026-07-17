@@ -6,6 +6,7 @@ from typing import Awaitable, Callable, Optional
 from document_retrieval.FetchDocuments import FetchDocuments
 from document_retrieval.FormType import FormType
 from utils.s3 import store
+from utils import dynamo
 
 logger = logging.getLogger(__name__)
 
@@ -129,7 +130,7 @@ async def get_documents(
         tckr, total, counts[FormType.TEN_K.value], counts[FormType.TEN_Q.value], counts[FormType.PROXY.value],
     )
 
-    # Function handed down that 
+    # Function handed down for progress updates 
     if on_progress:
         await on_progress({"type": "start", "total": total, "counts": counts})
 
@@ -139,10 +140,16 @@ async def get_documents(
 
     async def _run(fn, filing, form: str):
         nonlocal completed
-        # Await semephore lock
-        async with sem:
-            # Complete task
-            await asyncio.to_thread(fn, tckr, filing)
+        accession = filing.accession_no
+        # Check complepted status
+        existing = await asyncio.to_thread(dynamo.get, accession)
+        if not existing or existing.get("status") != "processed":
+            await asyncio.to_thread(dynamo.put, accession, status="processing")
+            # Await semephore lock
+            async with sem:
+                # Complete task
+                await asyncio.to_thread(fn, tckr, filing)
+            await asyncio.to_thread(dynamo.put, accession, status="processed")
         # If update progress function given, update client
         if on_progress:
             completed += 1

@@ -100,11 +100,12 @@ resource "aws_instance" "snowball" {
   vpc_security_group_ids      = [aws_security_group.ec2.id]
   iam_instance_profile        = aws_iam_instance_profile.snowball_iam_profile.name
   associate_public_ip_address = true
+  user_data                   = file("${path.module}/user_data.sh")
 
   metadata_options {
     http_endpoint               = "enabled"
-    http_tokens                 = "required"   # IMDSv2 only, good practice
-    http_put_response_hop_limit = 2            # <-- the fix
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 2
   }
 
   tags = {
