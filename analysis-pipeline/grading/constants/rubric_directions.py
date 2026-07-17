@@ -7,7 +7,7 @@ from enums.TenQSections import TenQSection
 ### (Item 10 / Item 11), since the 10-K frequently incorporates it by reference and
 ### there's no dedicated proxy section enum yet.
 
-rubric_directions: dict[RubricCategories, dict] = {
+RUBRIC_DIRECTIONS: dict[RubricCategories, dict] = {
     RubricCategories.REVENUE_DURABILITY : {
         "name": "Revenue durability",
         "locations": [
