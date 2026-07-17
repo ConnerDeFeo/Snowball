@@ -1,14 +1,14 @@
-from enum import Enum
-from TenKSections import TenKSection
-from TenQSections import TenQSection
+from enums.RubricCategories import RubricCategories
+from enums.TenKSections import TenKSection
+from enums.TenQSections import TenQSection
 
 ### THIS IS A STANDIN FOR NOW, FURTHER RESEARCH WILL BE DONE EXTENSIVLEY LATER ON ALL AREAS
 ### Proxy-only source material (exec bios, CD&A) is mapped to the closest 10-K item
 ### (Item 10 / Item 11), since the 10-K frequently incorporates it by reference and
 ### there's no dedicated proxy section enum yet.
 
-class RubricCategories(Enum):
-    REVENUE_DURABILITY = {
+rubric_directions: dict[RubricCategories, dict] = {
+    RubricCategories.REVENUE_DURABILITY : {
         "name": "Revenue durability",
         "locations": [
             TenKSection.PART_I_ITEM_1,      # Business - contract structure, recurring vs. project-based revenue, backlog
@@ -16,8 +16,8 @@ class RubricCategories(Enum):
             TenKSection.PART_II_ITEM_8,     # Notes - Revenue Recognition footnote (ASC 606 disaggregation)
         ],
         "directions": "Determine what share of revenue is contractual, recurring, or subscription-based versus one-time or project-based, and how much visibility management has into future revenue (backlog, deferred revenue, remaining performance obligations).",
-    }
-    REVENUE_QUALITY = {
+    },
+    RubricCategories.REVENUE_QUALITY : {
         "name": "Revenue quality",
         "locations": [
             TenKSection.PART_II_ITEM_7,     # MD&A - discussion of one-time items, divestiture gains, or channel stuffing risk
@@ -135,3 +135,4 @@ class RubricCategories(Enum):
     #     ],
     #     "directions": "Note any aggressive, unusual, or frequently-changing accounting policies, and flag critical audit matters that suggest judgment-heavy or contentious areas of the financial statements.",
     # }
+}
