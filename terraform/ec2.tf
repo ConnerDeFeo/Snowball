@@ -47,6 +47,11 @@ resource "aws_iam_role_policy_attachment" "ecr_read_only" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
+resource "aws_iam_role_policy_attachment" "bedrock_full_access" {
+  role       = aws_iam_role.snowball_iam.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonBedrockFullAccess"
+}
+
 resource "aws_iam_instance_profile" "snowball_iam_profile" {
   name = "snowball-ec2-s3-profile"
   role = aws_iam_role.snowball_iam.name
