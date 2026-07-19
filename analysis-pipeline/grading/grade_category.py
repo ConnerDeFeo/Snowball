@@ -12,6 +12,7 @@ def grade_category(tckr:str, rubric_category: RubricCategory, start_date:str, en
     result = invoke_bedrock(prompt)
 
     return GradedTimePeriod(
+        category=rubric_category,
         start=start_date,
         end=end_date,
         grade=result["grade"],
