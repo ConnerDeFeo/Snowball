@@ -35,7 +35,10 @@ def _fetch_10q_sections(tckr: str, sections: set[str], start_year: int, end_year
         if section not in sections or not _in_range(int(year_str), start_year, end_year):
             continue
         blocks.append({
-            "form": FormType.TEN_Q.value, "year": year_str, "quarter": quarter, "section": section,
+            "form": FormType.TEN_Q.value, 
+            "year": year_str, 
+            "quarter": quarter, 
+            "section": section,
             "text": retrieve(key).decode("utf-8"),
         })
     return blocks

@@ -4,8 +4,7 @@ from grading.enums.RubricCategory import RubricCategory
 from grading.enums.Sections import *
 from grading.constants.rubric_directions import (
     SUB_AGENT_BASE_INSTRUCTIONS,
-    SUB_AGENT_DIRECTIONS,
-    DEFAULT_SUB_AGENT_DIRECTIONS,
+    resolve_sub_agent_direction,
 )
 from utils import bedrock
 
@@ -15,12 +14,12 @@ class FindingsResponse(BaseModel):
 
 # Extracts the given findings for the given section text
 def extract_findings(section_text:str, rubric_category: RubricCategory, section:Section) -> FindingsResponse:
-    directions = SUB_AGENT_DIRECTIONS.get(rubric_category, {}).get(section, DEFAULT_SUB_AGENT_DIRECTIONS)
+    direction = resolve_sub_agent_direction(rubric_category, section)
 
     user_prompt = f"""
       Category: {rubric_category.value}
       Section: {section.value}
-      Directions: {directions}
+      Directions: {direction["prompt"]}
 
       Excerpt:
       {section_text}

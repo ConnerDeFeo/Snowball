@@ -7,7 +7,7 @@ from document_retrieval.FetchDocuments import FetchDocuments
 from document_retrieval.FormType import FormType
 from document_retrieval.ProxyData import build_proxy_data
 from utils.s3 import store
-from utils import dynamo
+from utils import documents_table
 
 logger = logging.getLogger(__name__)
 
@@ -145,14 +145,14 @@ async def get_documents(
         nonlocal completed
         accession = filing.accession_no
         # Check complepted status
-        existing = await asyncio.to_thread(dynamo.get, accession)
+        existing = await asyncio.to_thread(documents_table.get, accession)
         if not existing or existing.get("status") != "processed":
-            await asyncio.to_thread(dynamo.put, accession, status="processing")
+            await asyncio.to_thread(documents_table.put, accession, status="processing")
             # Await semephore lock
             async with sem:
                 # Complete task
                 await asyncio.to_thread(fn, tckr, filing)
-            await asyncio.to_thread(dynamo.put, accession, status="processed")
+            await asyncio.to_thread(documents_table.put, accession, status="processed")
         # If update progress function given, update client
         if on_progress:
             completed += 1

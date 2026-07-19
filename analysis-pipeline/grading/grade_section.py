@@ -7,6 +7,7 @@ from grading.enums.Sections import TenKSection, TenQSection
 from grading.constants.rubric_directions import BASE_INSTRUCTIONS, RUBRIC_DIRECTIONS
 from grading.extract_findings import extract_findings
 from grading.fetch_sections import fetch_sections
+from grading import finding_cache
 from grading.types.GradedTimePeriod import GradedTimePeriod
 from grading.types.SectionMeta import SectionMeta
 from utils import bedrock
@@ -30,9 +31,14 @@ def _section_enum(form: str, section: str) -> TenKSection | TenQSection:
 
 # Runs the per-section sub-agent (extract_findings) on one fetched block and
 # packages the result as a SectionMeta. Called in parallel, once per block.
-def _to_section_meta(block: dict, rubric_category: RubricCategory) -> SectionMeta:
+# Checks the findings cache first so a previously graded block/category/section
+# (same prompt + model version) never re-triggers the Bedrock call.
+def _to_section_meta(tckr: str, block: dict, rubric_category: RubricCategory) -> SectionMeta:
     section = _section_enum(block["form"], block["section"])
-    findings = extract_findings(block["text"], rubric_category, section)
+    findings = finding_cache.get_cached(tckr, block, rubric_category, section)
+    if findings is None:
+        findings = extract_findings(block["text"], rubric_category, section)
+        finding_cache.store(tckr, block, rubric_category, section, findings)
     return SectionMeta(
         filing_type=FormType(block["form"]),
         section=section,
@@ -66,7 +72,7 @@ def grade_section(tckr: str, start_date:str, end_date:str, rubric_category:Rubri
     # 3. Extract findings from each filing section in parallel — each call is
     # an independent, blocking Bedrock request, so threads overlap the I/O wait.
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        metas = list(executor.map(lambda block: _to_section_meta(block, rubric_category), blocks))
+        metas = list(executor.map(lambda block: _to_section_meta(tckr, block, rubric_category), blocks))
 
     # 4. Label each section's findings with its filing metadata (form/year/
     # quarter) so the final grader can see how evidence is distributed over time.

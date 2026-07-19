@@ -70,20 +70,60 @@ SUB_AGENT_BASE_INSTRUCTIONS = """
     findings above don't capture, or an empty string if nothing stands out.
 """
 
+### Bumping this invalidates the cached findings for every direction below, since
+### the stored prompt version combines this with each direction's own version.
+SUB_AGENT_BASE_VERSION = "v1"
+
 ### PLACEHOLDER — scaffolding only, real per-section directions to be researched later
-SUB_AGENT_DIRECTIONS: dict[RubricCategory, dict[TenKSection | TenQSection, str]] = {
+### Each leaf is {"prompt": <direction text>, "version": <manual string, bump on edit>}.
+SUB_AGENT_DIRECTIONS: dict[RubricCategory, dict[Section, dict]] = {
     RubricCategory.REVENUE_DURABILITY: {
-        TenKSection.PART_I_ITEM_1: "Look for contract structure, recurring vs. project-based revenue, and backlog figures.",
-        TenKSection.PART_II_ITEM_7: "Look for management's discussion of revenue drivers and disaggregation.",
-        TenKSection.PART_II_ITEM_8: "Look for the Revenue Recognition footnote, including ASC 606 disaggregation and remaining performance obligations.",
+        TenKSection.PART_I_ITEM_1: {
+            "prompt": "Look for contract structure, recurring vs. project-based revenue, and backlog figures.",
+            "version": "v1",
+        },
+        TenKSection.PART_II_ITEM_7: {
+            "prompt": "Look for management's discussion of revenue drivers and disaggregation.",
+            "version": "v1",
+        },
+        TenKSection.PART_II_ITEM_8: {
+            "prompt": "Look for the Revenue Recognition footnote, including ASC 606 disaggregation and remaining performance obligations.",
+            "version": "v1",
+        },
     },
     RubricCategory.REVENUE_QUALITY: {
-        TenKSection.PART_II_ITEM_7: "Look for discussion of one-time items, divestiture gains, or channel-stuffing risk.",
-        TenKSection.PART_II_ITEM_8: "Look for the Revenue Recognition footnote's detail on timing of recognition and contract assets/liabilities.",
-        TenQSection.PART_I_ITEM_1: "Look for quarter-over-quarter revenue trend and any restatements in the financial statements.",
-        TenQSection.PART_I_ITEM_2: "Look for quarterly MD&A commentary on revenue trend.",
+        TenKSection.PART_II_ITEM_7: {
+            "prompt": "Look for discussion of one-time items, divestiture gains, or channel-stuffing risk.",
+            "version": "v1",
+        },
+        TenKSection.PART_II_ITEM_8: {
+            "prompt": "Look for the Revenue Recognition footnote's detail on timing of recognition and contract assets/liabilities.",
+            "version": "v1",
+        },
+        TenQSection.PART_I_ITEM_1: {
+            "prompt": "Look for quarter-over-quarter revenue trend and any restatements in the financial statements.",
+            "version": "v1",
+        },
+        TenQSection.PART_I_ITEM_2: {
+            "prompt": "Look for quarterly MD&A commentary on revenue trend.",
+            "version": "v1",
+        },
     },
 }
 
-### Fallback directions used when a category/section pair has no specific entry above
-DEFAULT_SUB_AGENT_DIRECTIONS = "Extract any findings in this excerpt relevant to this grading category."
+### Fallback direction used when a category/section pair has no specific entry above
+DEFAULT_SUB_AGENT_DIRECTIONS = {
+    "prompt": "Extract any findings in this excerpt relevant to this grading category.",
+    "version": "v1",
+}
+
+# Looks up the direction dict for a category/section pair, falling back to the
+# default when no specific entry exists. Single source of truth so extract_findings
+# and the findings cache key always agree on which direction was used.
+def resolve_sub_agent_direction(rubric_category: RubricCategory, section: Section) -> dict:
+    return SUB_AGENT_DIRECTIONS.get(rubric_category, {}).get(section, DEFAULT_SUB_AGENT_DIRECTIONS)
+
+# Combines the shared base-instructions version with a direction's own version,
+# so bumping either one invalidates cached findings that used the old prompt.
+def sub_agent_prompt_version(direction: dict) -> str:
+    return f"{SUB_AGENT_BASE_VERSION}-{direction['version']}"
