@@ -17,7 +17,9 @@ def _fetch_10k_sections(tckr: str, sections: set[str], start_year: int, end_year
         if section not in sections or not _in_range(int(year_str), start_year, end_year):
             continue  # not a requested section, or filing year outside the window
         blocks.append({
-            "form": FormType.TEN_K.value, "year": year_str, "section": section,
+            "form": FormType.TEN_K.value, 
+            "year": year_str, 
+            "section": section,
             "text": retrieve(key).decode("utf-8"),  # actual S3 fetch happens here
         })
     return blocks

@@ -10,9 +10,6 @@ class Finding(BaseModel):
     status: str
 
 class SectionMeta(BaseModel):
-    # accession num used for unique identification
-    accession: str
-
     # 10k / 10q / Proxy
     filing_type: FormType
 
