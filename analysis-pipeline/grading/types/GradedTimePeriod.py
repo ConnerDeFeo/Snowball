@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from enums.RubricCategory import RubricCategory
+from grading.enums.RubricCategory import RubricCategory
 
 class GradedTimePeriod(BaseModel):
     category: RubricCategory

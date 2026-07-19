@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from document_retrieval import FormType
-from enums.RubricCategory import RubricCategory
-from enums.Sections import Section
+from grading.enums.RubricCategory import RubricCategory
+from grading.enums.Sections import Section
 
 class Finding(BaseModel):
     feild: str

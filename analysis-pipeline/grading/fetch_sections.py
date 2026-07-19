@@ -1,5 +1,5 @@
 from document_retrieval.FormType import FormType
-from enums.Sections import *
+from grading.enums.Sections import *
 from utils.s3 import list_keys, retrieve
 
 

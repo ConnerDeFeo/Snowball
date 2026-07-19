@@ -2,8 +2,8 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 
 from document_retrieval.FormType import FormType
-from enums.RubricCategory import RubricCategory
-from enums.Sections import TenKSection, TenQSection
+from grading.enums.RubricCategory import RubricCategory
+from grading.enums.Sections import TenKSection, TenQSection
 from grading.constants.rubric_directions import BASE_INSTRUCTIONS, RUBRIC_DIRECTIONS
 from grading.extract_findings import extract_findings
 from grading.fetch_sections import fetch_sections

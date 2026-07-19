@@ -1,5 +1,5 @@
-from enums.RubricCategory import RubricCategory
-from enums.Sections import *
+from grading.enums.RubricCategory import RubricCategory
+from grading.enums.Sections import *
 
 BASE_INSTRUCTIONS = """
   You are grading one category of a company's free-cash-flow-predictive quality,

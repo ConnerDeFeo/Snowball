@@ -1,7 +1,7 @@
 from grading.types.SectionMeta import Finding
 from pydantic import BaseModel
-from enums.RubricCategory import RubricCategory
-from enums.Sections import *
+from grading.enums.RubricCategory import RubricCategory
+from grading.enums.Sections import *
 from grading.constants.rubric_directions import (
     SUB_AGENT_BASE_INSTRUCTIONS,
     SUB_AGENT_DIRECTIONS,
