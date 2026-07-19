@@ -1,6 +1,6 @@
 from document_retrieval.FormType import FormType
-from enums.TenKSections import TenKSection
-from enums.TenQSections import TenQSection
+from enums.TenKSection import TenKSection
+from enums.TenQSection import TenQSection
 from utils.s3 import list_keys, retrieve
 
 

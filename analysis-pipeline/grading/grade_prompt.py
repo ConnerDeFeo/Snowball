@@ -2,7 +2,7 @@ import json
 
 import boto3
 
-from grading.constants.base_instructions import BASE_INSTRUCTIONS
+from grading.constants.rubric_directions import BASE_INSTRUCTIONS
 
 BEDROCK_REGION = "us-east-2"
 HAIKU_MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
