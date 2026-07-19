@@ -86,6 +86,10 @@ def grade_section(tckr: str, start_date:str, end_date:str, rubric_category:Rubri
     parsed = json.loads(response)
 
     return GradedTimePeriod(
-        category=rubric_category, start=start_date, end=end_date,
-        grade=float(parsed["grade"]), reasoning=parsed["reasoning"], quotes=parsed["quotes"],
+        category=rubric_category, 
+        start=start_date, 
+        end=end_date,
+        grade=float(parsed["grade"]), 
+        reasoning=parsed["reasoning"], 
+        quotes=parsed["quotes"],
     )
