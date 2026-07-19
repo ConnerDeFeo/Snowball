@@ -5,4 +5,4 @@ class GradedTimePeriod(NamedTuple):
     end: str
     grade: float
     reasoning: str
-    quotes = list[str]
+    quotes: list[str]
