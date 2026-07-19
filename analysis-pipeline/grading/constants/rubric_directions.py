@@ -48,9 +48,42 @@ RUBRIC_DIRECTIONS: dict[RubricCategory, dict] = {
 }
 
 SUB_AGENT_BASE_INSTRUCTIONS = """
+  You are extracting findings from a single excerpt of a company's SEC filing
+  (one section, one form) that are relevant to one grading category. You will be
+  given the category name, directions for what to look for in this section, and
+  the excerpt text.
 
+  Pull out discrete, factual findings only — do not grade or score anything.
+  If the excerpt doesn't contain anything relevant to the directions, return an
+  empty findings list rather than guessing.
+
+  Respond with ONLY a JSON object, no other text, in this exact shape:
+  {"findings": [{"feild": "<string>", "value": "<string>", "snippet": "<string>", "status": "<string>"}, ...],
+   "notable_anomalies": "<string>"}
+
+  - "feild": short name of what this finding is about (e.g. "backlog", "deferred revenue").
+  - "value": the extracted fact or figure, in a few words.
+  - "snippet": a short verbatim quote from the excerpt supporting this finding.
+  - "status": one of "discolsed" or "not_disclosed" explaining if the relavent information is even there
+    this finding was pulled from the excerpt.
+  - "notable_anomalies": anything odd or noteworthy in the excerpt that the
+    findings above don't capture, or an empty string if nothing stands out.
 """
 
+### PLACEHOLDER — scaffolding only, real per-section directions to be researched later
 SUB_AGENT_DIRECTIONS: dict[RubricCategory, dict[TenKSection | TenQSection, str]] = {
-
+    RubricCategory.REVENUE_DURABILITY: {
+        TenKSection.PART_I_ITEM_1: "Look for contract structure, recurring vs. project-based revenue, and backlog figures.",
+        TenKSection.PART_II_ITEM_7: "Look for management's discussion of revenue drivers and disaggregation.",
+        TenKSection.PART_II_ITEM_8: "Look for the Revenue Recognition footnote, including ASC 606 disaggregation and remaining performance obligations.",
+    },
+    RubricCategory.REVENUE_QUALITY: {
+        TenKSection.PART_II_ITEM_7: "Look for discussion of one-time items, divestiture gains, or channel-stuffing risk.",
+        TenKSection.PART_II_ITEM_8: "Look for the Revenue Recognition footnote's detail on timing of recognition and contract assets/liabilities.",
+        TenQSection.PART_I_ITEM_1: "Look for quarter-over-quarter revenue trend and any restatements in the financial statements.",
+        TenQSection.PART_I_ITEM_2: "Look for quarterly MD&A commentary on revenue trend.",
+    },
 }
+
+### Fallback directions used when a category/section pair has no specific entry above
+DEFAULT_SUB_AGENT_DIRECTIONS = "Extract any findings in this excerpt relevant to this grading category."
