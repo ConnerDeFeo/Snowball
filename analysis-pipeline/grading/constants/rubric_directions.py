@@ -1,4 +1,4 @@
-from enums.RubricCategories import RubricCategories
+from enums.RubricCategory import RubricCategory
 from enums.TenKSections import TenKSection
 from enums.TenQSections import TenQSection
 
@@ -7,8 +7,8 @@ from enums.TenQSections import TenQSection
 ### (Item 10 / Item 11), since the 10-K frequently incorporates it by reference and
 ### there's no dedicated proxy section enum yet.
 
-RUBRIC_DIRECTIONS: dict[RubricCategories, dict] = {
-    RubricCategories.REVENUE_DURABILITY : {
+RUBRIC_DIRECTIONS: dict[RubricCategory, dict] = {
+    RubricCategory.REVENUE_DURABILITY : {
         "name": "Revenue durability",
         "locations": [
             TenKSection.PART_I_ITEM_1,      # Business - contract structure, recurring vs. project-based revenue, backlog
@@ -17,7 +17,7 @@ RUBRIC_DIRECTIONS: dict[RubricCategories, dict] = {
         ],
         "directions": "Determine what share of revenue is contractual, recurring, or subscription-based versus one-time or project-based, and how much visibility management has into future revenue (backlog, deferred revenue, remaining performance obligations).",
     },
-    RubricCategories.REVENUE_QUALITY : {
+    RubricCategory.REVENUE_QUALITY : {
         "name": "Revenue quality",
         "locations": [
             TenKSection.PART_II_ITEM_7,     # MD&A - discussion of one-time items, divestiture gains, or channel stuffing risk
