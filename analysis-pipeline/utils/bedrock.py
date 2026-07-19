@@ -1,13 +1,26 @@
+import logging
+import time
+
 import boto3
 
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 client = boto3.client("bedrock-runtime")
+logger = logging.getLogger(__name__)
 
 def invoke(system: str, user: str) -> str:
+    start = time.perf_counter()
     response = client.converse(
         modelId=MODEL_ID,
         system=[{"text": system}],
         messages=[{"role": "user", "content": [{"text": user}]}],
+    )
+    elapsed = time.perf_counter() - start
+    usage = response["usage"]
+    logger.info(
+        "bedrock invoke: input_tokens=%d output_tokens=%d elapsed=%.2fs",
+        usage["inputTokens"],
+        usage["outputTokens"],
+        elapsed,
     )
     text = response["output"]["message"]["content"][0]["text"]
     return _strip_code_fence(text)
