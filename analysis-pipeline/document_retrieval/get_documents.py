@@ -91,14 +91,14 @@ def _process_proxy(tckr: str, filing):
 
 async def get_documents(
     tckr: str,
-    from_date: str,
-    to_date: str,
+    start_date: str,
+    end_date: str,
     # Callabe function that takes dict param and returns awaitable nothing
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
 ) -> bool:
     """
     Fetch every 10-K, 10-Q, and DEF 14A proxy statement for `tckr` filed within
-    [from_date, to_date] and cache them to S3.
+    [start_date, end_date] and cache them to S3.
 
     Layout:
       filings/<tckr>/10-K/<year>/<section>.txt (+ sections.json)
@@ -118,9 +118,9 @@ async def get_documents(
     # These list/filter calls are lightweight index lookups, not downloads —
     # the actual filing content is fetched lazily inside the worker threads
     # below, so all the slow network I/O runs in parallel.
-    tenk_filings = fetcher.fetch_multiple_10k(from_date, to_date)
-    tenq_filings = fetcher.fetch_multiple_10q(from_date, to_date)
-    proxy_filings = fetcher.fetch_multiple_proxy(from_date, to_date)
+    tenk_filings = fetcher.fetch_multiple_10k(start_date, end_date)
+    tenq_filings = fetcher.fetch_multiple_10q(start_date, end_date)
+    proxy_filings = fetcher.fetch_multiple_proxy(start_date, end_date)
 
     counts = {
         FormType.TEN_K.value: len(tenk_filings),

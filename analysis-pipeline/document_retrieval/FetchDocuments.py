@@ -34,9 +34,9 @@ class FetchDocuments:
             return None
         return self._get_relevant_year(year, filings)
 
-    def fetch_multiple_10k(self, from_date: str, to_date: str):
-        """Return filing handles (not yet downloaded) within [from_date, to_date]."""
-        filings = self.company.get_filings(form=FormType.TEN_K.value).filter(date=f"{from_date}:{to_date}")
+    def fetch_multiple_10k(self, start_date: str, end_date: str):
+        """Return filing handles (not yet downloaded) within [start_date, end_date]."""
+        filings = self.company.get_filings(form=FormType.TEN_K.value).filter(date=f"{start_date}:{end_date}")
 
         return list(filings)
 
@@ -50,9 +50,9 @@ class FetchDocuments:
 
         return self._get_relevant_year(year, filings)
     
-    def fetch_multiple_10q(self, from_date: str, to_date: str):
-        """Return filing handles (not yet downloaded) within [from_date, to_date]."""
-        filings = self.company.get_filings(form=FormType.TEN_Q.value).filter(date=f"{from_date}:{to_date}")
+    def fetch_multiple_10q(self, start_date: str, end_date: str):
+        """Return filing handles (not yet downloaded) within [start_date, end_date]."""
+        filings = self.company.get_filings(form=FormType.TEN_Q.value).filter(date=f"{start_date}:{end_date}")
 
         return list(filings)
 
@@ -66,10 +66,10 @@ class FetchDocuments:
 
         return self._get_relevant_year(year, filings)
     
-    def fetch_multiple_proxy(self, from_date: str, to_date: str):
+    def fetch_multiple_proxy(self, start_date: str, end_date: str):
         # Proxy statements are stored as raw text (Filing.text()), not the
         # compensation-focused object .obj() would return, so we return the
         # Filing objects themselves here.
-        filings = self.company.get_filings(form=FormType.PROXY.value).filter(date=f"{from_date}:{to_date}")
+        filings = self.company.get_filings(form=FormType.PROXY.value).filter(date=f"{start_date}:{end_date}")
 
         return list(filings)
