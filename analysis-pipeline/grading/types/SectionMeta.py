@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from document_retrieval import FormType
+from document_retrieval.FormType import FormType
 from grading.enums.RubricCategory import RubricCategory
 from grading.enums.Sections import Section
 
