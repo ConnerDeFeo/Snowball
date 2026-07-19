@@ -4,7 +4,7 @@ from grading.enums.RubricCategory import RubricCategory
 from grading.enums.Sections import Section
 
 class Finding(BaseModel):
-    feild: str
+    field: str
     value: str
     snippet: str
     status: str
