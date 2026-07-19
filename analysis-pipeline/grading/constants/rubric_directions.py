@@ -58,10 +58,10 @@ SUB_AGENT_BASE_INSTRUCTIONS = """
   empty findings list rather than guessing.
 
   Respond with ONLY a JSON object, no other text, in this exact shape:
-  {"findings": [{"feild": "<string>", "value": "<string>", "snippet": "<string>", "status": "<string>"}, ...],
+  {"findings": [{"field": "<string>", "value": "<string>", "snippet": "<string>", "status": "<string>"}, ...],
    "notable_anomalies": "<string>"}
 
-  - "feild": short name of what this finding is about (e.g. "backlog", "deferred revenue").
+  - "field": short name of what this finding is about (e.g. "backlog", "deferred revenue").
   - "value": the extracted fact or figure, in a few words.
   - "snippet": a short verbatim quote from the excerpt supporting this finding.
   - "status": one of "discolsed" or "not_disclosed" explaining if the relavent information is even there
