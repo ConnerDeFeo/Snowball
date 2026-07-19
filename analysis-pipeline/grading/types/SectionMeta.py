@@ -1,16 +1,15 @@
-from typing import NamedTuple
+from pydantic import BaseModel
 from document_retrieval import FormType
 from enums.RubricCategory import RubricCategory
-from enums.TenKSection import TenKSection
-from enums.TenQSection import TenQSection
+from enums.Sections import Section
 
-class Finding(NamedTuple):
+class Finding(BaseModel):
     feild: str
     value: str
     snippet: str
     status: str
 
-class SectionMeta(NamedTuple):
+class SectionMeta(BaseModel):
     # accession num used for unique identification
     accession: str
 
@@ -18,7 +17,7 @@ class SectionMeta(NamedTuple):
     filing_type: FormType
 
     # Specific section this is looking at
-    section: TenKSection | TenQSection
+    section: Section
 
     # which rubric category is this looking at
     rubric_category: RubricCategory

@@ -1,6 +1,5 @@
 from document_retrieval.FormType import FormType
-from enums.TenKSection import TenKSection
-from enums.TenQSection import TenQSection
+from enums.Sections import *
 from utils.s3 import list_keys, retrieve
 
 
@@ -40,7 +39,7 @@ def _fetch_10q_sections(tckr: str, sections: set[str], start_year: int, end_year
     return blocks
 
 
-def fetch_sections(tckr: str, start_date: str, end_date: str, locations: list[TenKSection | TenQSection]) -> list[dict]:
+def fetch_sections(tckr: str, start_date: str, end_date: str, locations: list[Section]) -> list[dict]:
     """Fetch the cached S3 section text for each TenKSection/TenQSection in
     `locations`, restricted to filings whose year falls within
     [start_date, end_date]. Missing sections/filings are skipped silently."""

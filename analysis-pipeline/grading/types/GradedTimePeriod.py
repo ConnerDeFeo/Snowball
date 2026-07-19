@@ -1,8 +1,8 @@
-from typing import NamedTuple
+from pydantic import BaseModel
 
 from enums.RubricCategory import RubricCategory
 
-class GradedTimePeriod(NamedTuple):
+class GradedTimePeriod(BaseModel):
     category: RubricCategory
     start: str
     end: str
