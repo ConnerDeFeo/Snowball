@@ -9,27 +9,6 @@ resource "aws_dynamodb_table" "snowball_documents" {
   }
 }
 
-resource "aws_iam_role_policy" "ec2_dynamodb_documents" {
-  name = "snowball-ec2-dynamodb-documents"
-  role = aws_iam_role.snowball_iam.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-        "dynamodb:UpdateItem",
-        "dynamodb:DeleteItem",
-        "dynamodb:Query",
-        "dynamodb:Scan",
-      ]
-      Resource = aws_dynamodb_table.snowball_documents.arn
-    }]
-  })
-}
-
 resource "aws_dynamodb_table" "snowball_findings" {
   name         = "snowball_findings"
   billing_mode = "PAY_PER_REQUEST"
@@ -45,23 +24,6 @@ resource "aws_dynamodb_table" "snowball_findings" {
     name = "version_key"
     type = "S"
   }
-}
-
-resource "aws_iam_role_policy" "ec2_dynamodb_findings" {
-  name = "snowball-ec2-dynamodb-findings"
-  role = aws_iam_role.snowball_iam.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-      ]
-      Resource = aws_dynamodb_table.snowball_findings.arn
-    }]
-  })
 }
 
 resource "aws_dynamodb_table" "snowball_section_grades" {
@@ -81,19 +43,3 @@ resource "aws_dynamodb_table" "snowball_section_grades" {
   }
 }
 
-resource "aws_iam_role_policy" "ec2_dynamodb_section_grades" {
-  name = "snowball-ec2-dynamodb-section-grades"
-  role = aws_iam_role.snowball_iam.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-      ]
-      Resource = aws_dynamodb_table.snowball_section_grades.arn
-    }]
-  })
-}

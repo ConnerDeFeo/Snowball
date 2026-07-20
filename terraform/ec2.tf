@@ -19,44 +19,6 @@ data "aws_subnets" "default" {
   }
 }
 
-resource "aws_iam_role" "snowball_iam" {
-  name = "snowball-ec2-s3-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = { Service = "ec2.amazonaws.com" }
-      Action    = "sts:AssumeRole"
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ec2_s3_full_access" {
-  role       = aws_iam_role.snowball_iam.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
-}
-
-resource "aws_iam_role_policy_attachment" "ec2_ssm" {
-  role       = aws_iam_role.snowball_iam.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-}
-
-resource "aws_iam_role_policy_attachment" "ecr_read_only" {
-  role       = aws_iam_role.snowball_iam.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
-
-resource "aws_iam_role_policy_attachment" "bedrock_full_access" {
-  role       = aws_iam_role.snowball_iam.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonBedrockFullAccess"
-}
-
-resource "aws_iam_instance_profile" "snowball_iam_profile" {
-  name = "snowball-ec2-s3-profile"
-  role = aws_iam_role.snowball_iam.name
-}
-
 resource "aws_security_group" "ec2" {
   name        = "snowball-ec2-sg"
   description = "Security group for snowball EC2 instance"
