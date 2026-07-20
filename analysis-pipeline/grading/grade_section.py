@@ -1,5 +1,6 @@
+import asyncio
 import json
-from concurrent.futures import ThreadPoolExecutor
+from typing import Awaitable, Callable, Optional
 
 from document_retrieval.FormType import FormType
 from grading.enums.RubricCategory import RubricCategory
@@ -57,7 +58,14 @@ def _label_section_meta(block: dict, meta: SectionMeta) -> dict:
     label["findings"] = meta.model_dump(mode="json")
     return label
 
-def grade_section(tckr: str, start_date:str, end_date:str, rubric_category:RubricCategory) -> GradedTimePeriod:
+async def grade_section(
+    tckr: str,
+    start_date: str,
+    end_date: str,
+    rubric_category: RubricCategory,
+    # Callable function that takes dict param and returns awaitable nothing
+    on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
+) -> GradedTimePeriod:
     # 1. Look up where to look (section locations) and what to look for
     # (directions) for this rubric category.
     cfg = RUBRIC_DIRECTIONS.get(rubric_category)
@@ -65,14 +73,39 @@ def grade_section(tckr: str, start_date:str, end_date:str, rubric_category:Rubri
         return _no_evidence(rubric_category, start_date, end_date, "No rubric directions defined yet for this category.")
 
     # 2. Pull the cached filing text for those locations within the date window.
-    blocks = fetch_sections(tckr, start_date, end_date, cfg["locations"])
+    blocks = await asyncio.to_thread(fetch_sections, tckr, start_date, end_date, cfg["locations"])
     if not blocks:
         return _no_evidence(rubric_category, start_date, end_date, "No cached filings found for this ticker/period.")
 
+    total = len(blocks)
+    if on_progress:
+        await on_progress({"type": "start", "total": total})
+
     # 3. Extract findings from each filing section in parallel — each call is
     # an independent, blocking Bedrock request, so threads overlap the I/O wait.
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        metas = list(executor.map(lambda block: _to_section_meta(tckr, block, rubric_category), blocks))
+    # gather (not as_completed) keeps `metas` in `blocks` order for the zip below,
+    # while each _run still reports progress as soon as its own block finishes.
+    sem = asyncio.Semaphore(MAX_WORKERS)
+    completed = 0
+
+    async def _run(block: dict) -> SectionMeta:
+        nonlocal completed
+        async with sem:
+            meta = await asyncio.to_thread(_to_section_meta, tckr, block, rubric_category)
+        if on_progress:
+            completed += 1
+            await on_progress({
+                "type": "progress",
+                "completed": completed,
+                "total": total,
+                "form": block["form"],
+                "year": block["year"],
+                "section": block["section"],
+                "quarter": block.get("quarter"),
+            })
+        return meta
+
+    metas = await asyncio.gather(*[_run(block) for block in blocks])
 
     # 4. Label each section's findings with its filing metadata (form/year/
     # quarter) so the final grader can see how evidence is distributed over time.
@@ -88,14 +121,14 @@ def grade_section(tckr: str, start_date:str, end_date:str, rubric_category:Rubri
       {json.dumps(labeled, indent=2)}
     """
 
-    response = bedrock.invoke(BASE_INSTRUCTIONS, user_prompt)
+    response = await asyncio.to_thread(bedrock.invoke, BASE_INSTRUCTIONS, user_prompt)
     parsed = json.loads(response)
 
     return GradedTimePeriod(
-        category=rubric_category, 
-        start=start_date, 
+        category=rubric_category,
+        start=start_date,
         end=end_date,
-        grade=float(parsed["grade"]), 
-        reasoning=parsed["reasoning"], 
+        grade=float(parsed["grade"]),
+        reasoning=parsed["reasoning"],
         quotes=parsed["quotes"],
     )

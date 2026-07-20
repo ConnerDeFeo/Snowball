@@ -16,10 +16,6 @@ func (a *API) handleHealth(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "ok")
 }
 
-// ________________________________________ //
-// Websockets
-// ________________________________________ //
-
 var upgrader = websocket.Upgrader{
 	// Allow any origin
 	CheckOrigin: func(r *http.Request) bool { return true },
