@@ -1,7 +1,7 @@
 # docker-compose.prod.yml — run this one on EC2
 services:
   analysis-pipeline:
-    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:a871ecd
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:6765f9a
     restart: unless-stopped
     secrets:
       - EDGAR_IDENTITY
