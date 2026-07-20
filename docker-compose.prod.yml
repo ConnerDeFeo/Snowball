@@ -1,7 +1,7 @@
 # docker-compose.prod.yml — run this one on EC2
 services:
   analysis-pipeline:
-    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:6765f9a
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:d6a2aeb
     restart: unless-stopped
     secrets:
       - EDGAR_IDENTITY
@@ -9,7 +9,7 @@ services:
       - AWS_DEFAULT_REGION=us-east-2
 
   orchestrator:
-    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:52ac579
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:d6a2aeb
     ports:
       - "8080:8080"
     environment:

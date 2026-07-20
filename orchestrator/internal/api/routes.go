@@ -23,6 +23,6 @@ func NewRouter(apc *analysispipeline.Client) *http.ServeMux {
 	mux.HandleFunc("GET /analysis-pipeline/health", a.handleHealth)
 	// Websocket connections
 	mux.HandleFunc("GET /documents/{ticker}", a.handleDocuments)
-	mux.HandleFunc("POST /grade_section/{tckr}", a.handleGradeSection)
+	mux.HandleFunc("GET /grade_section/{tckr}", a.handleGradeSection)
 	return mux
 }
