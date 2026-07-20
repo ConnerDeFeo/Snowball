@@ -63,3 +63,37 @@ resource "aws_iam_role_policy" "ec2_dynamodb_findings" {
     }]
   })
 }
+
+resource "aws_dynamodb_table" "snowball_section_grades" {
+  name         = "snowball_section_grades"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "tckr"
+  range_key    = "category_period"
+
+  attribute {
+    name = "tckr"
+    type = "S"
+  }
+
+  attribute {
+    name = "category_period"
+    type = "S"
+  }
+}
+
+resource "aws_iam_role_policy" "ec2_dynamodb_section_grades" {
+  name = "snowball-ec2-dynamodb-section-grades"
+  role = aws_iam_role.snowball_iam.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+      ]
+      Resource = aws_dynamodb_table.snowball_section_grades.arn
+    }]
+  })
+}

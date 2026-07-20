@@ -9,6 +9,7 @@ from grading.constants.rubric_directions import BASE_INSTRUCTIONS, RUBRIC_DIRECT
 from grading.extract_findings import extract_findings
 from grading.fetch_sections import fetch_sections
 from grading import finding_cache
+from grading import grade_store
 from grading.types.GradedTimePeriod import GradedTimePeriod
 from grading.types.SectionMeta import SectionMeta
 from utils import bedrock
@@ -124,7 +125,7 @@ async def grade_section(
     response = await asyncio.to_thread(bedrock.invoke, BASE_INSTRUCTIONS, user_prompt)
     parsed = json.loads(response)
 
-    return GradedTimePeriod(
+    graded = GradedTimePeriod(
         category=rubric_category,
         start=start_date,
         end=end_date,
@@ -132,3 +133,7 @@ async def grade_section(
         reasoning=parsed["reasoning"],
         quotes=parsed["quotes"],
     )
+
+    # Persist the graded result so it can be looked up later without re-grading.
+    await asyncio.to_thread(grade_store.store, tckr, graded)
+    return graded
