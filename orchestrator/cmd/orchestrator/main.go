@@ -11,9 +11,13 @@ import (
 
 func main() {
 	// Get env var
-	analysisPipelineURL := os.Getenv("PIPELINE_URL")
+	analysisPipelineURL := os.Getenv("ANALYSIS_PIPELINE_URL")
 	if analysisPipelineURL == "" {
-		log.Fatal("PIPELINE_URL not set")
+		log.Fatal("ANALYSIS_PIPELINE_URL not set")
+	}
+	reviewPipelineURL := os.Getenv("REVIEW_PIPELINE_URL")
+	if reviewPipelineURL == "" {
+		log.Fatal("REVIEW_PIPELINE_URL not set")
 	}
 
 	// Get analysis pipeline client

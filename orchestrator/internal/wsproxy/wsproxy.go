@@ -1,4 +1,4 @@
-package api
+package wsproxy
 
 import (
 	"net/http"
@@ -11,10 +11,10 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-// Upgrades the incoming request to a websocket, dials the downstream
+// Proxy upgrades the incoming request to a websocket, dials the downstream
 // connection via dial, and pipes messages between the two until either
 // side closes.
-func (a *API) proxyWebSocket(w http.ResponseWriter, r *http.Request, dial func() (*websocket.Conn, error)) {
+func Proxy(w http.ResponseWriter, r *http.Request, dial func() (*websocket.Conn, error)) {
 	// Upgrade connection to ws
 	client, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {

@@ -5,24 +5,17 @@ import (
 	analysispipeline "orchestrator/internal/analysis-pipeline"
 )
 
-// holds everything the handlers need to reach
-type API struct {
-	analysisPipeline *analysispipeline.Client
-}
-
 func NewRouter(apc *analysispipeline.Client) *http.ServeMux {
 
-	// Create API struct
-	a := &API{analysisPipeline: apc}
 	mux := http.NewServeMux()
 
 	// Server routes
 	mux.HandleFunc("GET /health", handleHealth)
 
 	// Analysis pipeline routes //
-	mux.HandleFunc("GET /analysis-pipeline/health", a.handleHealth)
+	mux.HandleFunc("GET /analysis-pipeline/health", apc.HandleHealth)
 	// Websocket connections
-	mux.HandleFunc("GET /documents/{ticker}", a.handleDocuments)
-	mux.HandleFunc("GET /grade_section/{tckr}", a.handleGradeSection)
+	mux.HandleFunc("GET /documents/{ticker}", apc.HandleDocuments)
+	mux.HandleFunc("GET /grade_section/{tckr}", apc.HandleGradeSection)
 	return mux
 }

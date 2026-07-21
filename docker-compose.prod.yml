@@ -1,5 +1,8 @@
 # docker-compose.prod.yml — run this one on EC2
 services:
+  review-pipeline:
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/review-pipeline:8f21730
+    restart: unless-stopped
   analysis-pipeline:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:8f21730
     restart: unless-stopped
@@ -7,16 +10,16 @@ services:
       - EDGAR_IDENTITY
     environment:
       - AWS_DEFAULT_REGION=us-east-2
-
   orchestrator:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:e9c5520
-    ports:
-      - "8080:8080"
+    restart: unless-stopped
     environment:
       PIPELINE_URL: "http://analysis-pipeline:8000"
     depends_on:
       - analysis-pipeline
-    restart: unless-stopped
+      - review-pipeline
+    ports:
+      - "8080:8080"
 
 secrets:
   EDGAR_IDENTITY:

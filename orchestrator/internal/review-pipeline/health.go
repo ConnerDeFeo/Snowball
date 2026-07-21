@@ -1,4 +1,4 @@
-package analysispipeline
+package reviewpipeline
 
 import (
 	"fmt"
@@ -20,14 +20,4 @@ func (c *Client) Health() error {
 		return nil
 	}
 	return fmt.Errorf("pipeline returned unexpected status: %d", resp.StatusCode)
-}
-
-// HandleHealth reports whether the analysis pipeline is reachable and healthy.
-func (c *Client) HandleHealth(w http.ResponseWriter, r *http.Request) {
-	if err := c.Health(); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintln(w, "ok")
 }
