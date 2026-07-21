@@ -27,7 +27,7 @@ def run_agent(tckr:str, start:str, end:str, manifest_text:str, user_text:str):
         ("placeholder", "{agent_scratchpad}"),
     ])
 
-    llm = ChatBedrock(model_id="...", region_name="us-east-2")
+    llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2")
     executor = AgentExecutor(
         agent=create_tool_calling_agent(llm, [get_rationale], prompt),
         tools=[get_rationale],
