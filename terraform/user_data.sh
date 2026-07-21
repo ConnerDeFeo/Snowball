@@ -6,6 +6,10 @@ dnf install -y git docker
 systemctl enable --now docker
 usermod -aG docker ec2-user
 
+# Node/npm + wscat
+dnf install -y nodejs
+npm install -g wscat
+
 # Docker Compose CLI plugin
 DOCKER_CONFIG=/usr/local/lib/docker
 mkdir -p $DOCKER_CONFIG/cli-plugins
