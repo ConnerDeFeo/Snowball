@@ -7,6 +7,7 @@ import (
 
 	analysispipeline "orchestrator/internal/analysis-pipeline"
 	"orchestrator/internal/api"
+	reviewpipeline "orchestrator/internal/review-pipeline"
 )
 
 func main() {
@@ -22,9 +23,11 @@ func main() {
 
 	// Get analysis pipeline client
 	apc := analysispipeline.New(analysisPipelineURL)
+	// Get review pipeline client
+	rpc := reviewpipeline.New(reviewPipelineURL)
 
-	// Hand down apc client to router
-	mux := api.NewRouter(apc)
+	// Hand down clients to router
+	mux := api.NewRouter(apc, rpc)
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)
 	}

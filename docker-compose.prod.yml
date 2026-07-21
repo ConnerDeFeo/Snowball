@@ -14,7 +14,8 @@ services:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:e9c5520
     restart: unless-stopped
     environment:
-      PIPELINE_URL: "http://analysis-pipeline:8000"
+      ANALYSIS_PIPELINE_URL: "http://analysis-pipeline:8000"
+      REVIEW_PIPELINE_URL: "http://review-pipeline:8000"
     depends_on:
       - analysis-pipeline
       - review-pipeline

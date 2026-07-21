@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func (c *Client) Health() error {
+func (c *Client) health() error {
 	url := c.baseURL + "/health"
 	resp, err := http.Get(url)
 
@@ -24,7 +24,7 @@ func (c *Client) Health() error {
 
 // HandleHealth reports whether the analysis pipeline is reachable and healthy.
 func (c *Client) HandleHealth(w http.ResponseWriter, r *http.Request) {
-	if err := c.Health(); err != nil {
+	if err := c.health(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
