@@ -1,6 +1,6 @@
 # tools/agent.py
 from langchain_aws import ChatBedrock
-from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain.agents import create_agent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import tool
 from fetch_rationale import fetch_rationale
@@ -28,10 +28,16 @@ def run_agent(tckr:str, start:str, end:str, manifest_text:str, user_text:str):
     ])
 
     llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2")
-    executor = AgentExecutor(
-        agent=create_tool_calling_agent(llm, [get_rationale], prompt),
+    agent = create_agent(
+        model=llm,
         tools=[get_rationale],
-        verbose=True,
+        system_prompt=(
+            "You answer questions about a company's analysis.\n\n"
+            f"Scores for {tckr}, {start}-{end}:\n{manifest_text}\n\n"
+            "Call get_rationale for the reasoning behind any score. "
+            "Use section names exactly as written above."
+        ),
     )
 
-    return executor.invoke({"input": user_text})
+    result = agent.invoke({"messages": [{"role": "user", "content": user_text}]})
+    return result
