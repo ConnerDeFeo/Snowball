@@ -1,13 +1,5 @@
 # The different containers that will be running
 services:
-  analysis-pipeline:
-    # defing the docker build
-    build:
-      context: ./analysis-pipeline
-      dockerfile: dockerfile
-    secrets:
-      - EDGAR_IDENTITY
-
   orchestrator:
     # Docker build
     build:
@@ -22,6 +14,17 @@ services:
     # This container cannot run without analysis pipeline
     depends_on:
       - analysis-pipeline
+  analysis-pipeline:
+    # defing the docker build
+    build:
+      context: ./analysis-pipeline
+      dockerfile: dockerfile
+    secrets:
+      - EDGAR_IDENTITY
+  review-pipeline:
+    build:
+      context: ./review-pipeline
+      dockerfile: dockerfile
 
 # Define relevant secrets needed
 secrets:

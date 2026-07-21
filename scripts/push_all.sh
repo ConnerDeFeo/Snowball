@@ -8,6 +8,7 @@ set -e
 images=(
     "orchestrator"
     "analysis-pipeline"
+    "review-pipeline"
 )
  
 project_root=".."
