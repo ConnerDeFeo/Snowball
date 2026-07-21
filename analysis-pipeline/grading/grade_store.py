@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from grading.types.GradedTimePeriod import GradedTimePeriod
-from utils import section_grades_table
+from utils.dynamo import section_grades_table
 
 # Identifies which category/period this graded result covers, under one ticker.
 def _category_period(graded: GradedTimePeriod) -> str:

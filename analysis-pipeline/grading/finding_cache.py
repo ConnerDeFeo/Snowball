@@ -5,7 +5,8 @@ from grading.constants.rubric_directions import (
     sub_agent_prompt_version,
 )
 from grading.extract_findings import FindingsResponse
-from utils import bedrock, findings_table
+from utils import bedrock
+from utils.dynamo import findings_table
 
 # Identifies which filing section/category this sub-agent call is about.
 # Quarter is only present on 10-Q blocks, so it's only included then.
