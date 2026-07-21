@@ -7,8 +7,9 @@ from fetch_rationale import fetch_rationale
 
 # ... build manifest, render to string as `manifest_text`
 # ... table, ticker, start, end as before
-def run_agent(tckr, start, end, manifest_text):
+def run_agent(tckr:str, start:str, end:str, manifest_text:str, user_text:str):
 
+    # Agent reads the docstring
     @tool
     def get_rationale(section: str) -> str:
         """Get the full reasoning and supporting quotes behind a section's score.
@@ -33,4 +34,4 @@ def run_agent(tckr, start, end, manifest_text):
         verbose=True,
     )
 
-    return executor.invoke({"input": "why is the revenue durability score what it is?"})
+    return executor.invoke({"input": user_text})
