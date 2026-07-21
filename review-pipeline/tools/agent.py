@@ -3,7 +3,7 @@ from langchain_aws import ChatBedrock
 from langchain.agents import create_agent
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import tool
-from fetch_rationale import fetch_rationale
+from tools.fetch_rationale import fetch_rationale
 
 # ... build manifest, render to string as `manifest_text`
 # ... table, ticker, start, end as before
