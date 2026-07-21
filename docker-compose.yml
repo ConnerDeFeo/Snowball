@@ -20,7 +20,8 @@ services:
       - "8080:8080"
     # Server talks to analysis-pipeline through the internal docker network
     environment:
-      PIPELINE_URL: "http://analysis-pipeline:8000"
+      ANALYSIS_PIPELINE_URL: "http://analysis-pipeline:8000"
+      REVIEW_PIPELINE_URL: "http://review-pipeline:8000"
     # This container cannot run without analysis pipeline
     depends_on:
       - analysis-pipeline
