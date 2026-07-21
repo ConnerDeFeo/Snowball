@@ -3,6 +3,8 @@ services:
   review-pipeline:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/review-pipeline:9d4643d
     restart: unless-stopped
+    environment:
+      - AWS_DEFAULT_REGION=us-east-2
   analysis-pipeline:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:8f21730
     restart: unless-stopped
