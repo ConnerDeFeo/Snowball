@@ -1,7 +1,6 @@
 # tools/agent.py
 from langchain_aws import ChatBedrock
 from langchain.agents import create_agent
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import tool
 from tools.fetch_rationale import fetch_rationale
 
@@ -16,16 +15,6 @@ def run_agent(tckr:str, start_date:str, end_date:str, manifest_text:str, user_te
         Use the section name exactly as it appears in the manifest."""
         item = fetch_rationale(tckr, start_date, end_date, section)
         return str(item) if item else "no rationale found for that section"
-
-    prompt = ChatPromptTemplate.from_messages([
-        ("system",
-        "You answer questions about a company's analysis.\n\n"
-        f"Scores for {tckr}, {start_date}-{end_date}:\n{manifest_text}\n\n"
-        "Call get_rationale for the reasoning behind any score. "
-        "Use section names exactly as written above."),
-        ("human", "{input}"),
-        ("placeholder", "{agent_scratchpad}"),
-    ])
 
     llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2")
     agent = create_agent(
