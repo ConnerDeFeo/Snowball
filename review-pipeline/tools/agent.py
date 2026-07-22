@@ -12,7 +12,7 @@ def run_agent(tckr:str, start_date:str, end_date:str, manifest_text:str, user_te
     @tool
     def get_rationale(section: str) -> str:
         """Get the full reasoning and supporting quotes behind a section's score.
-        Use the section name exactly as it appears in the manifest."""
+        Use the section name exactly as it appears in the manifest. section must be in snake_case format."""
         item = fetch_rationale(tckr, start_date, end_date, section)
         return str(item) if item else "no rationale found for that section"
 
