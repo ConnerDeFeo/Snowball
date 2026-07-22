@@ -1,17 +1,23 @@
 from enum import Enum
 
+from enum import Enum
+
 class RubricCategory(Enum):
-    REVENUE_DURABILITY = "Revenue durability"
-    REVENUE_QUALITY = "Revenue quality"
-    CUSTOMER_CONCENTRATION = "Customer concentration"
-    SUPPLIER_CONCENTRATION = "Supplier concentration"
-    GROSS_MARGIN = "Gross margin level"
-    GROSS_MARGIN_STABILITY = "Gross margin stability"
-    MOAT = "Competitive moat / ROIC persistence"
-    CAPITAL_BURDENS = "Capital intensity & reinvestment burden"
-    EARNINGS_QUALITY = "Earnings quality / cash conversion"
-    MANAGEMENT = "Management"
-    CAP_ALLOC = "Capital allocation"
-    BALANCE_SHEET = "Balance sheet resilience"
-    INDUSTRY_STRUCT = "Industry structure"
-    ACCOUNTING_STANDARDS = "Accounting standards"
+    REVENUE_DURABILITY = "revenue_durability"
+    REVENUE_QUALITY = "revenue_quality"
+    CUSTOMER_CONCENTRATION = "customer_concentration"
+    SUPPLIER_CONCENTRATION = "supplier_concentration"
+    GROSS_MARGIN = "gross_margin_level"
+    GROSS_MARGIN_STABILITY = "gross_margin_stability"
+    MOAT = "competitive_moat_roic_persistence"
+    CAPITAL_BURDENS = "capital_intensity_reinvestment_burden"
+    EARNINGS_QUALITY = "earnings_quality_cash_conversion"
+    MANAGEMENT = "management"
+    CAP_ALLOC = "capital_allocation"
+    BALANCE_SHEET = "balance_sheet_resilience"
+    INDUSTRY_STRUCT = "industry_structure"
+    ACCOUNTING_STANDARDS = "accounting_standards"
+
+    @property
+    def display(self) -> str:
+        return self.value.replace("_", " ").capitalize()

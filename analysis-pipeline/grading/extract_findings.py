@@ -17,7 +17,7 @@ def extract_findings(section_text:str, rubric_category: RubricCategory, section:
     direction = resolve_sub_agent_direction(rubric_category, section)
 
     user_prompt = f"""
-      Category: {rubric_category.value}
+      Category: {rubric_category.display}
       Section: {section.value}
       Directions: {direction["prompt"]}
 

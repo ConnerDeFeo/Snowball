@@ -20,8 +20,12 @@ MAX_WORKERS = 8  # cap concurrent Bedrock sub-agent calls per grade_section run
 # cached filings) so grade_section never has to raise or return None.
 def _no_evidence(rubric_category: RubricCategory, start_date: str, end_date: str, reasoning: str) -> GradedTimePeriod:
     return GradedTimePeriod(
-        category=rubric_category, start=start_date, end=end_date,
-        grade=0.0, reasoning=reasoning, quotes=[],
+        category=rubric_category, 
+        start=start_date, 
+        end=end_date,
+        grade=0.0, 
+        reasoning=reasoning, 
+        quotes=[],
     )
 
 # TenKSection/TenQSection share string values, so the block's form type
