@@ -1,7 +1,7 @@
 # docker-compose.prod.yml — run this one on EC2
 services:
   review-pipeline:
-    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/review-pipeline:42fc725
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/review-pipeline:93b069a
     restart: unless-stopped
     environment:
       - AWS_DEFAULT_REGION=us-east-2
