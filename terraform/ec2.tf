@@ -1,13 +1,3 @@
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["al2023-ami-2023.*-x86_64"]
-  }
-}
-
 data "aws_vpc" "default" {
   default = true
 }
@@ -54,7 +44,7 @@ resource "aws_security_group" "ec2" {
 }
 
 resource "aws_instance" "snowball" {
-  ami                         = data.aws_ami.amazon_linux.id
+  ami                         = "ami-00d192c6f636c0ffe"
   instance_type               = "t3.small"
   subnet_id                   = data.aws_subnets.default.ids[0]
   vpc_security_group_ids      = [aws_security_group.ec2.id]

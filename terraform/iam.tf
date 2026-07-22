@@ -27,8 +27,14 @@ resource "aws_iam_instance_profile" "snowball_iam_profile" {
   role = aws_iam_role.snowball_iam.name
 }
 
-resource "aws_iam_role_policy" "ec2_dynamodb_documents" {
-  name = "snowball-ec2-dynamodb-documents"
+resource "aws_iam_role_policy" "ec2_dynamodb" {
+  for_each = {
+    documents      = aws_dynamodb_table.snowball_documents.arn
+    findings       = aws_dynamodb_table.snowball_findings.arn
+    section_grades = aws_dynamodb_table.snowball_section_grades.arn
+  }
+
+  name = "snowball-ec2-dynamodb-${replace(each.key, "_", "-")}"
   role = aws_iam_role.snowball_iam.id
 
   policy = jsonencode({
@@ -38,46 +44,9 @@ resource "aws_iam_role_policy" "ec2_dynamodb_documents" {
       Action = [
         "dynamodb:GetItem",
         "dynamodb:PutItem",
-        "dynamodb:UpdateItem",
-        "dynamodb:DeleteItem",
         "dynamodb:Query",
-        "dynamodb:Scan",
       ]
-      Resource = aws_dynamodb_table.snowball_documents.arn
-    }]
-  })
-}
-
-resource "aws_iam_role_policy" "ec2_dynamodb_findings" {
-  name = "snowball-ec2-dynamodb-findings"
-  role = aws_iam_role.snowball_iam.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-      ]
-      Resource = aws_dynamodb_table.snowball_findings.arn
-    }]
-  })
-}
-
-resource "aws_iam_role_policy" "ec2_dynamodb_section_grades" {
-  name = "snowball-ec2-dynamodb-section-grades"
-  role = aws_iam_role.snowball_iam.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Action = [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-      ]
-      Resource = aws_dynamodb_table.snowball_section_grades.arn
+      Resource = each.value
     }]
   })
 }

@@ -9,7 +9,7 @@ import (
 
 // HandleDocuments streams document retrieval progress for a ticker.
 func (c *Client) HandleDocuments(w http.ResponseWriter, r *http.Request) {
-	ticker := r.PathValue("ticker")
+	ticker := r.PathValue("tckr")
 	wsproxy.Proxy(w, r, func() (*websocket.Conn, error) {
 		return c.DialDocuments(ticker)
 	})
