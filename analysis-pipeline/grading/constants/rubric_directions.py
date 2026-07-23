@@ -27,7 +27,7 @@ BASE_INSTRUCTIONS = """
 
 RUBRIC_DIRECTIONS: dict[RubricCategory, dict] = {
     RubricCategory.REVENUE_DURABILITY : {
-        "name": "Revenue durability",
+        "name": RubricCategory.REVENUE_DURABILITY.display,
         "locations": [
             TenKSection.PART_I_ITEM_1,      # Business - contract structure, recurring vs. project-based revenue, backlog
             TenKSection.PART_II_ITEM_7,     # MD&A - revenue drivers and disaggregation discussion
@@ -36,7 +36,7 @@ RUBRIC_DIRECTIONS: dict[RubricCategory, dict] = {
         "directions": "Determine what share of revenue is contractual, recurring, or subscription-based versus one-time or project-based, and how much visibility management has into future revenue (backlog, deferred revenue, remaining performance obligations).",
     },
     RubricCategory.REVENUE_QUALITY : {
-        "name": "Revenue quality",
+        "name": RubricCategory.REVENUE_QUALITY.display,
         "locations": [
             TenKSection.PART_II_ITEM_7,     # MD&A - discussion of one-time items, divestiture gains, or channel stuffing risk
             TenKSection.PART_II_ITEM_8,     # Notes - Revenue Recognition footnote (timing of recognition, contract assets/liabilities)
