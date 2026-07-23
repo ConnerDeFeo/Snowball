@@ -26,7 +26,7 @@ def run_agent(tckr:str, start_year:int, end_year:int, manifest_text:str, finding
         item = fetch_findings_rationale(tckr, year, form, period, category, section)
         return str(item) if item else "no finding found for that filing/category/section"
 
-    llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2")
+    llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2", max_tokens=4096)
     agent = create_agent(
         model=llm,
         tools=[get_rationale, get_finding],
