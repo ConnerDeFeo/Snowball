@@ -4,8 +4,8 @@ from grading.enums.RubricCategory import RubricCategory
 
 class GradedTimePeriod(BaseModel):
     category: RubricCategory
-    start: str
-    end: str
+    start: int
+    end: int
     grade: float
     reasoning: str
     quotes: list[str]

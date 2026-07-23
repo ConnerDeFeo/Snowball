@@ -1,7 +1,7 @@
 from utils.dynamo import section_grades_table
 
-def get_manifest(tckr: str, start_date: str, end_date: str) -> str:
-    prefix = f"{start_date}#{end_date}#"
+def get_manifest(tckr: str, start_year: int, end_year: int) -> str:
+    prefix = f"{start_year}#{end_year}#"
     items = section_grades_table.query(tckr, prefix)
     manifest = [
         {

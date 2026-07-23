@@ -44,14 +44,13 @@ def _fetch_10q_sections(tckr: str, sections: set[str], start_year: int, end_year
     return blocks
 
 
-def fetch_sections(tckr: str, start_date: str, end_date: str, locations: list[Section]) -> list[dict]:
+def fetch_sections(tckr: str, start_year: int, end_year: int, locations: list[Section]) -> list[dict]:
     """Fetch the cached S3 section text for each TenKSection/TenQSection in
     `locations`, restricted to filings whose year falls within
-    [start_date, end_date]. Missing sections/filings are skipped silently."""
+    [start_year, end_year]. Missing sections/filings are skipped silently."""
     # split requested locations by form type, since each is stored under a different key layout
     tenk_sections = {loc.value for loc in locations if isinstance(loc, TenKSection)}
     tenq_sections = {loc.value for loc in locations if isinstance(loc, TenQSection)}
-    start_year, end_year = int(start_date[:4]), int(end_date[:4])
 
     blocks = []
     if tenk_sections:

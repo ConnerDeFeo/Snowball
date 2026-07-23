@@ -2,7 +2,6 @@
 import logging
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
 
 from grading.enums.RubricCategory import RubricCategory
 from grading.grade_section import grade_section
@@ -11,10 +10,6 @@ from utils.websocket import receive_body, send_error
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-class GradeRequest(BaseModel):
-    start_year: int
-    end_year: int
-
 @router.websocket("/grade_section/{tckr}")
 async def grade_section_route(websocket: WebSocket, tckr: str):
     # Get params
@@ -22,11 +17,12 @@ async def grade_section_route(websocket: WebSocket, tckr: str):
     if body is None:
         return
 
-    start_date = body.get("start_date")
-    end_date = body.get("end_date")
-    if not start_date or not end_date or not body.get("rubric_category"):
-        await send_error(websocket, "start_date, end_date, and rubric_category are required")
+    start_year = body.get("start_year")
+    end_year = body.get("end_year")
+    if start_year is None or end_year is None or not body.get("rubric_category"):
+        await send_error(websocket, "start_year, end_year, and rubric_category are required")
         return
+    start_year, end_year = int(start_year), int(end_year)
 
     # RubricCategory doesn't auto-coerce from raw JSON like a Pydantic body would
     try:
@@ -37,7 +33,7 @@ async def grade_section_route(websocket: WebSocket, tckr: str):
 
     # Grade section, streaming sub-agent progress as they wrap up
     try:
-        graded = await grade_section(tckr, start_date, end_date, rubric_category, on_progress=websocket.send_json)
+        graded = await grade_section(tckr, start_year, end_year, rubric_category, on_progress=websocket.send_json)
     except WebSocketDisconnect:
         return
     except Exception as e:

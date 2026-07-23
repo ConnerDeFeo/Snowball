@@ -18,11 +18,11 @@ MAX_WORKERS = 8  # cap concurrent Bedrock sub-agent calls per grade_section run
 
 # Fallback result used whenever there's nothing to grade (no rubric yet, or no
 # cached filings) so grade_section never has to raise or return None.
-def _no_evidence(rubric_category: RubricCategory, start_date: str, end_date: str, reasoning: str) -> GradedTimePeriod:
+def _no_evidence(rubric_category: RubricCategory, start_year: int, end_year: int, reasoning: str) -> GradedTimePeriod:
     return GradedTimePeriod(
-        category=rubric_category, 
-        start=start_date, 
-        end=end_date,
+        category=rubric_category,
+        start=start_year,
+        end=end_year,
         grade=0.0, 
         reasoning=reasoning, 
         quotes=[],
@@ -65,8 +65,8 @@ def _label_section_meta(block: dict, meta: SectionMeta) -> dict:
 
 async def grade_section(
     tckr: str,
-    start_date: str,
-    end_date: str,
+    start_year: int,
+    end_year: int,
     rubric_category: RubricCategory,
     # Callable function that takes dict param and returns awaitable nothing
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
@@ -75,12 +75,12 @@ async def grade_section(
     # (directions) for this rubric category.
     cfg = RUBRIC_DIRECTIONS.get(rubric_category)
     if cfg is None:
-        return _no_evidence(rubric_category, start_date, end_date, "No rubric directions defined yet for this category.")
+        return _no_evidence(rubric_category, start_year, end_year, "No rubric directions defined yet for this category.")
 
     # 2. Pull the cached filing text for those locations within the date window.
-    blocks = await asyncio.to_thread(fetch_sections, tckr, start_date, end_date, cfg["locations"])
+    blocks = await asyncio.to_thread(fetch_sections, tckr, start_year, end_year, cfg["locations"])
     if not blocks:
-        return _no_evidence(rubric_category, start_date, end_date, "No cached filings found for this ticker/period.")
+        return _no_evidence(rubric_category, start_year, end_year, "No cached filings found for this ticker/period.")
 
     total = len(blocks)
     if on_progress:
@@ -131,8 +131,8 @@ async def grade_section(
 
     graded = GradedTimePeriod(
         category=rubric_category,
-        start=start_date,
-        end=end_date,
+        start=start_year,
+        end=end_year,
         grade=float(parsed["grade"]),
         reasoning=parsed["reasoning"],
         quotes=parsed["quotes"],

@@ -17,21 +17,21 @@ async def documents(websocket: WebSocket, tckr: str):
         return
 
     # Get params
-    start_date = body.get("start_date")
-    end_date = body.get("end_date")
-    if not start_date or not end_date:
-        await send_error(websocket, "start_date and end_date are required")
+    start_year = body.get("start_year")
+    end_year = body.get("end_year")
+    if start_year is None or end_year is None:
+        await send_error(websocket, "start_year and end_year are required")
         return
+    start_year, end_year = int(start_year), int(end_year)
 
     # Range validation
-    from_year, to_year = int(start_date[:4]), int(end_date[:4])
-    if to_year < from_year or to_year - from_year >= MAX_YEARS:
+    if end_year < start_year or end_year - start_year >= MAX_YEARS:
         await send_error(websocket, f"date range may span at most {MAX_YEARS} years")
         return
 
     # Process documents
     try:
-        found = await get_documents(tckr, start_date, end_date, on_progress=websocket.send_json)
+        found = await get_documents(tckr, start_year, end_year, on_progress=websocket.send_json)
     except WebSocketDisconnect:
         return
     except Exception as e:
