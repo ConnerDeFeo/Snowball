@@ -34,6 +34,19 @@ def _quarter(period: str) -> int:
     return (month - 1) // 3 + 1
 
 
+def _fiscal_focus(report):
+    """(fiscal_year, fiscal_period) from XBRL DEI focus facts, or (None, None)
+    if the filing has no XBRL data. fiscal_period is "FY", "Q1".."Q4"."""
+    fin = getattr(report, "financials", None)
+    xb = getattr(fin, "xb", None) if fin is not None else None
+    if xb is None:
+        return None, None
+    info = xb.entity_info
+    fy = info.get("fiscal_year")
+    fp = info.get("fiscal_period")
+    return (str(fy) if fy else None), (fp or None)
+
+
 def _store_sectioned(report, base: str):
     """Store one txt file per section plus a combined sections.json under `base`."""
     sections = {}
@@ -45,15 +58,18 @@ def _store_sectioned(report, base: str):
 
 
 def _store_10k(tckr: str, report):
-    year = _year(_period_key(report))
+    fy, _ = _fiscal_focus(report)
+    year = fy or _year(_period_key(report))
     base = f"filings/{tckr}/{FormType.TEN_K.value}/{year}"
     _store_sectioned(report, base)
 
 
 def _store_10q(tckr: str, report):
     period = _period_key(report)
-    year, quarter = _year(period), _quarter(period)
-    base = f"filings/{tckr}/{FormType.TEN_Q.value}/{year}/Q{quarter}"
+    fy, fp = _fiscal_focus(report)
+    year = fy or _year(period)
+    quarter = fp or f"Q{_quarter(period)}"
+    base = f"filings/{tckr}/{FormType.TEN_Q.value}/{year}/{quarter}"
     _store_sectioned(report, base)
 
 
@@ -100,7 +116,9 @@ async def get_documents(
     Fetch every 10-K, 10-Q, and DEF 14A proxy statement for `tckr` filed within
     [start_year, end_year] and cache them to S3.
 
-    Layout:
+    Layout (10-K/10-Q <year>/quarter are fiscal, from XBRL DEI focus facts,
+    falling back to calendar-derived values when XBRL is unavailable; DEF 14A
+    stays calendar-derived since proxies have no XBRL fiscal data):
       filings/<tckr>/10-K/<year>/<section>.txt (+ sections.json)
       filings/<tckr>/10-Q/<year>/Q<n>/<section>.txt (+ sections.json)
       filings/<tckr>/DEF 14A/<year>/proxy.txt
