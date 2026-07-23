@@ -17,7 +17,8 @@ def review(tckr:str, req: ReviewRequest):
     # 1. values come off the request body
     start_year, end_year, user_text = req.start_year, req.end_year, req.user_text
 
-    # 2. manifest for THIS company/window
+    # 2. manifests for THIS company/window
     manifest_text = get_grade_manifest(tckr, start_year, end_year)
+    findings_manifest_text = get_findings_manifest(tckr, start_year, end_year)
 
-    return run_agent(tckr, start_year, end_year, manifest_text, user_text)
+    return run_agent(tckr, start_year, end_year, manifest_text, findings_manifest_text, user_text)
