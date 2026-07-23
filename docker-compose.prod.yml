@@ -1,19 +1,19 @@
 # docker-compose.prod.yml — run this one on EC2
 services:
   review-pipeline:
-    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/review-pipeline:8b6f9be
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/review-pipeline:cdf98e4
     restart: unless-stopped
     environment:
       - AWS_DEFAULT_REGION=us-east-2
   analysis-pipeline:
-    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:e874414
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:cdf98e4
     restart: unless-stopped
     secrets:
       - EDGAR_IDENTITY
     environment:
       - AWS_DEFAULT_REGION=us-east-2
   orchestrator:
-    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:e874414
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:cdf98e4
     restart: unless-stopped
     environment:
       ANALYSIS_PIPELINE_URL: "http://analysis-pipeline:8000"

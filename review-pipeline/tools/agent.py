@@ -1,4 +1,6 @@
 # tools/agent.py
+from typing import Awaitable, Callable, Optional
+
 from langchain_aws import ChatBedrock
 from langchain.agents import create_agent
 from langchain_core.tools import tool
@@ -7,7 +9,11 @@ from tools.fetch_findings_rationale import fetch_findings_rationale
 
 # ... build manifest, render to string as `manifest_text`
 # ... table, ticker, start_year, end_year as before
-def run_agent(tckr:str, start_year:int, end_year:int, manifest_text:str, findings_manifest_text:str, user_text:str):
+async def run_agent(
+    tckr:str, start_year:int, end_year:int, manifest_text:str, findings_manifest_text:str, user_text:str,
+    # Callable function that takes dict param and returns awaitable nothing
+    on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
+) -> str:
 
     # Agent reads the docstring
     @tool
@@ -42,5 +48,21 @@ def run_agent(tckr:str, start_year:int, end_year:int, manifest_text:str, finding
         ),
     )
 
-    result = agent.invoke({"messages": [{"role": "user", "content": user_text}]})
-    return result
+    if on_progress:
+        await on_progress({"type": "start"})
+
+    # Stream node-by-node updates so we can report each tool call as it happens,
+    # and keep the latest assistant text as the running answer.
+    final_text = ""
+    async for chunk in agent.astream({"messages": [{"role": "user", "content": user_text}]}, stream_mode="updates"):
+        for update in chunk.values():
+            for msg in update.get("messages", []):
+                tool_calls = getattr(msg, "tool_calls", None) or []
+                if on_progress:
+                    for call in tool_calls:
+                        await on_progress({"type": "progress", "tool": call["name"], "args": call.get("args", {})})
+                if getattr(msg, "type", None) == "ai" and not tool_calls:
+                    content = msg.content
+                    final_text = content if isinstance(content, str) else str(content)
+
+    return final_text
