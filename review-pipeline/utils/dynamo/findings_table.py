@@ -1,5 +1,6 @@
 import boto3
 from boto3.dynamodb.conditions import Key
+from split_key import split_key
 
 TABLE_NAME = "snowball_findings"
 table = boto3.resource('dynamodb').Table(TABLE_NAME)
@@ -24,3 +25,14 @@ def query_range(tckr: str, low: str, high: str) -> list[dict]:
         & Key("finding_key").between(low, high)
     )
     return response.get("Items", [])
+
+# utils/finding_key.py
+# Shared helpers for parsing snowball_findings sort keys:
+#   year#form#period#rubric_category#section#version#model_id
+# version is a compound "v{primary}-v{secondary}", e.g. "v1-v2".
+
+def version_sort_key(finding_key: str) -> tuple[int, int, str]:
+    parts = split_key(finding_key)
+    version, model_id = parts[5], parts[6]
+    primary, secondary = version.split("-")
+    return (int(primary.lstrip("v")), int(secondary.lstrip("v")), model_id)
