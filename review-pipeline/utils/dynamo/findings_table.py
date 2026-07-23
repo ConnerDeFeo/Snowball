@@ -1,6 +1,6 @@
 import boto3
 from boto3.dynamodb.conditions import Key
-from split_key import split_key
+from utils.dynamo.split_key import split_key
 
 TABLE_NAME = "snowball_findings"
 table = boto3.resource('dynamodb').Table(TABLE_NAME)
