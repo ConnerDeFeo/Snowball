@@ -18,6 +18,6 @@ def review(tckr:str, req: ReviewRequest):
     start_year, end_year, user_text = req.start_year, req.end_year, req.user_text
 
     # 2. manifest for THIS company/window
-    manifest_text = get_manifest(tckr, start_year, end_year)
+    manifest_text = get_grade_manifest(tckr, start_year, end_year)
 
     return run_agent(tckr, start_year, end_year, manifest_text, user_text)

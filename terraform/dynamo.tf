@@ -12,16 +12,16 @@ resource "aws_dynamodb_table" "snowball_documents" {
 resource "aws_dynamodb_table" "snowball_findings" {
   name         = "snowball_findings"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "section_key"
-  range_key    = "version_key"
+  hash_key     = "tckr"
+  range_key    = "finding_key"
 
   attribute {
-    name = "section_key"
+    name = "tckr"
     type = "S"
   }
 
   attribute {
-    name = "version_key"
+    name = "finding_key"
     type = "S"
   }
 }
