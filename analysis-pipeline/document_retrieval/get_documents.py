@@ -125,7 +125,7 @@ async def get_documents(
 
     If `on_progress` is given, it's awaited with a "start" event before any
     downloads begin and a "progress" event after each filing completes —
-    lets a caller (e.g. a websocket route) stream progress to a client.
+    lets a caller (e.g. an SSE route) stream progress to a client.
 
     Returns False if `tckr` could not be resolved to a company, True otherwise.
     """
