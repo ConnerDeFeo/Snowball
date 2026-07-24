@@ -6,7 +6,7 @@ services:
     environment:
       - AWS_DEFAULT_REGION=us-east-2
   analysis-pipeline:
-    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:8b6101d
+    image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:0cf4342
     restart: unless-stopped
     secrets:
       - EDGAR_IDENTITY

@@ -17,10 +17,19 @@ def invoke(system: str, user: str) -> str:
     elapsed = time.perf_counter() - start
     usage = response["usage"]
     logger.info(
-        "bedrock invoke: input_tokens=%d output_tokens=%d elapsed=%.2fs",
+        "bedrock invoke: model=%s input_tokens=%d output_tokens=%d total_tokens=%d "
+        "cache_read_tokens=%s cache_write_tokens=%s stop_reason=%s "
+        "latency_ms=%s elapsed=%.2fs request_id=%s",
+        MODEL_ID,
         usage["inputTokens"],
         usage["outputTokens"],
+        usage.get("totalTokens"),
+        usage.get("cacheReadInputTokens"),
+        usage.get("cacheWriteInputTokens"),
+        response.get("stopReason"),
+        response.get("metrics", {}).get("latencyMs"),
         elapsed,
+        response.get("ResponseMetadata", {}).get("RequestId"),
     )
     text = response["output"]["message"]["content"][0]["text"]
     return _strip_code_fence(text)
