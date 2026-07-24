@@ -18,6 +18,7 @@ func NewRouter(apc *analysispipeline.Client, rpc *reviewpipeline.Client) *http.S
 	// SSE streams
 	mux.HandleFunc("GET /documents/{tckr}", apc.HandleDocuments)
 	mux.HandleFunc("GET /grade_section/{tckr}", apc.HandleGradeSection)
+	mux.HandleFunc("GET /grade_all/{tckr}", apc.HandleGradeAll)
 
 	// Rubric CRUD (plain JSON, not SSE)
 	mux.HandleFunc("POST /rubric/{rubric_category}", apc.HandleRubric)
