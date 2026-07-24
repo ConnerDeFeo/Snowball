@@ -71,13 +71,19 @@ async def grade_section(
     # Callable function that takes dict param and returns awaitable nothing
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
 ) -> GradedTimePeriod:
-    # 1. Look up where to look (section locations) and what to look for
+    # 1. If this ticker/period/category has already been graded, return the
+    # cached result instead of re-running the pipeline.
+    cached = await asyncio.to_thread(grade_store.load, tckr, start_year, end_year, rubric_category)
+    if cached is not None:
+        return cached
+
+    # 2. Look up where to look (section locations) and what to look for
     # (directions) for this rubric category.
     cfg = RUBRIC_DIRECTIONS.get(rubric_category)
     if cfg is None:
         return _no_evidence(rubric_category, start_year, end_year, "No rubric directions defined yet for this category.")
 
-    # 2. Pull the cached filing text for those locations within the date window.
+    # 3. Pull the cached filing text for those locations within the date window.
     blocks = await asyncio.to_thread(fetch_sections, tckr, start_year, end_year, cfg["locations"])
     if not blocks:
         return _no_evidence(rubric_category, start_year, end_year, "No cached filings found for this ticker/period.")
@@ -86,7 +92,7 @@ async def grade_section(
     if on_progress:
         await on_progress({"type": "start", "total": total})
 
-    # 3. Extract findings from each filing section in parallel — each call is
+    # 4. Extract findings from each filing section in parallel — each call is
     # an independent, blocking Bedrock request, so threads overlap the I/O wait.
     # gather (not as_completed) keeps `metas` in `blocks` order for the zip below,
     # while each _run still reports progress as soon as its own block finishes.
@@ -112,11 +118,11 @@ async def grade_section(
 
     metas = await asyncio.gather(*[_run(block) for block in blocks])
 
-    # 4. Label each section's findings with its filing metadata (form/year/
+    # 5. Label each section's findings with its filing metadata (form/year/
     # quarter) so the final grader can see how evidence is distributed over time.
     labeled = [_label_section_meta(block, meta) for block, meta in zip(blocks, metas)]
 
-    # 5. Hand all the labeled findings to one final grading call, which scores
+    # 6. Hand all the labeled findings to one final grading call, which scores
     # the whole category/period based on the aggregated evidence.
     user_prompt = f"""
       Category: {cfg["name"]}
