@@ -1,14 +1,14 @@
-package sse
+package proxy
 
 import (
 	"io"
 	"net/http"
 )
 
-// Proxy forwards a request to a downstream pipeline and streams the response
+// SSE forwards a request to a downstream pipeline and streams the response
 // back to the client, flushing after every chunk so SSE frames arrive as
 // they're produced instead of buffering.
-func Proxy(w http.ResponseWriter, r *http.Request, method, url string, body io.Reader) {
+func SSE(w http.ResponseWriter, r *http.Request, method, url string, body io.Reader) {
 	// Tie the incoming request context from client to outgoing request so the
 	// downstream call gets cancelled if the client disconnects.
 	req, err := http.NewRequestWithContext(r.Context(), method, url, body)
@@ -21,7 +21,8 @@ func Proxy(w http.ResponseWriter, r *http.Request, method, url string, body io.R
 		req.Header.Set("Content-Type", ct)
 	}
 
-	// Send the request
+	// Send the request. Unlike proxy.JSON, this uses http.DefaultClient (no
+	// timeout) since SSE streams are long-lived by design.
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadGateway)

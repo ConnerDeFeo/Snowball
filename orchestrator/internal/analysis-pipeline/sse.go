@@ -3,11 +3,11 @@ package analysispipeline
 import (
 	"net/http"
 
-	"orchestrator/internal/sse"
+	"orchestrator/internal/proxy"
 )
 
 // proxySSE forwards a GET request (path + query string) to the analysis
-// pipeline and streams the response back to the client via the shared sse.Proxy.
+// pipeline and streams the response back to the client via the shared proxy.SSE.
 func (c *Client) proxySSE(w http.ResponseWriter, r *http.Request, path string) {
 	url := c.baseURL + path + "/" + r.PathValue("tckr")
 
@@ -16,5 +16,5 @@ func (c *Client) proxySSE(w http.ResponseWriter, r *http.Request, path string) {
 		url += "?" + r.URL.RawQuery
 	}
 
-	sse.Proxy(w, r, http.MethodGet, url, nil)
+	proxy.SSE(w, r, http.MethodGet, url, nil)
 }
