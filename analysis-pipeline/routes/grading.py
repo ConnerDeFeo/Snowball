@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from grading.enums.RubricCategory import RubricCategory
+from enums.RubricCategory import RubricCategory
 from grading.grade_section import grade_section
 from utils.sse import sse_response
 

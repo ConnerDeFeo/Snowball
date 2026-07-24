@@ -1,6 +1,6 @@
 from enum import Enum
 
-from document_retrieval.FormType import FormType
+from enums.FormType import FormType
 
 type Section = TenQSection | TenKSection
 

@@ -4,7 +4,7 @@ import logging
 import threading
 from typing import Awaitable, Callable, Optional
 from document_retrieval.FetchDocuments import FetchDocuments
-from document_retrieval.FormType import FormType
+from enums.FormType import FormType
 from document_retrieval.ProxyData import build_proxy_data
 from utils.s3 import store
 from utils.dynamo import documents_table

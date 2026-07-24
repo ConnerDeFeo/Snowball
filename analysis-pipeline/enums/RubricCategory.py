@@ -1,7 +1,5 @@
 from enum import Enum
 
-from enum import Enum
-
 class RubricCategory(Enum):
     REVENUE_DURABILITY = "revenue_durability"
     REVENUE_QUALITY = "revenue_quality"

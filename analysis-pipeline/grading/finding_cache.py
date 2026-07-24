@@ -1,5 +1,5 @@
-from grading.enums.RubricCategory import RubricCategory
-from grading.enums.Sections import Section
+from enums.RubricCategory import RubricCategory
+from enums.Sections import Section
 from grading.rubric_directions import sub_agent_prompt_version
 from grading.extract_findings import FindingsResponse
 from utils import bedrock

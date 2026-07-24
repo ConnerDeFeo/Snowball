@@ -1,5 +1,5 @@
-from grading.enums.RubricCategory import RubricCategory
-from grading.enums.Sections import Section, section_from_location_key
+from enums.RubricCategory import RubricCategory
+from enums.Sections import Section, section_from_location_key
 from utils.dynamo import rubric_directions_table
 
 BASE_INSTRUCTIONS = """
@@ -75,6 +75,7 @@ def get_rubric_directions(rubric_category: RubricCategory) -> dict | None:
         "directions": meta["directions"],
         "locations": [section_from_location_key(key) for key in meta["locations"]],
         "sub_agent_directions": sub_agent_directions,
+        "version": meta["version"],
     }
 
 # Looks up the sub-agent direction for a form/section within an already-loaded

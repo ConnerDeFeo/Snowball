@@ -1,7 +1,7 @@
 from edgar import Company, set_identity, CompanyNotFoundError
 from dotenv import load_dotenv
 import os
-from document_retrieval.FormType import FormType
+from enums.FormType import FormType
 
 # Set identity for EDGAR db
 load_dotenv()

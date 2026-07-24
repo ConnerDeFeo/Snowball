@@ -2,9 +2,9 @@ import asyncio
 import json
 from typing import Awaitable, Callable, Optional
 
-from document_retrieval.FormType import FormType
-from grading.enums.RubricCategory import RubricCategory
-from grading.enums.Sections import section_from_form
+from enums.FormType import FormType
+from enums.RubricCategory import RubricCategory
+from enums.Sections import section_from_form
 from grading.rubric_directions import (
     BASE_INSTRUCTIONS,
     get_rubric_directions,
@@ -70,17 +70,19 @@ async def grade_section(
     # Callable function that takes dict param and returns awaitable nothing
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
 ) -> GradedTimePeriod:
-    # 1. If this ticker/period/category has already been graded, return the
-    # cached result instead of re-running the pipeline.
-    cached = await asyncio.to_thread(grade_store.load, tckr, start_year, end_year, rubric_category)
-    if cached is not None:
-        return cached
-
-    # 2. Look up where to look (section locations) and what to look for
+    # 1. Look up where to look (section locations) and what to look for
     # (directions) for this rubric category.
     cfg = await asyncio.to_thread(get_rubric_directions, rubric_category)
     if cfg is None:
         return _no_evidence(rubric_category, start_year, end_year, "No rubric directions defined yet for this category.")
+
+    # 2. If this ticker/period/category has already been graded under the
+    # current rubric version, return the cached result instead of re-running
+    # the pipeline. An edited rubric bumps the version, so this is a cache
+    # miss until the next grade is produced.
+    cached = await asyncio.to_thread(grade_store.load, tckr, start_year, end_year, rubric_category, cfg["version"])
+    if cached is not None:
+        return cached
 
     # 3. Pull the cached filing text for those locations within the date window.
     blocks = await asyncio.to_thread(fetch_sections, tckr, start_year, end_year, cfg["locations"])
@@ -144,5 +146,5 @@ async def grade_section(
     )
 
     # Persist the graded result so it can be looked up later without re-grading.
-    await asyncio.to_thread(grade_store.store, tckr, graded)
+    await asyncio.to_thread(grade_store.store, tckr, graded, cfg["version"])
     return graded
