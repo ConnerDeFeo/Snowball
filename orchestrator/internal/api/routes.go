@@ -19,6 +19,14 @@ func NewRouter(apc *analysispipeline.Client, rpc *reviewpipeline.Client) *http.S
 	mux.HandleFunc("GET /documents/{tckr}", apc.HandleDocuments)
 	mux.HandleFunc("GET /grade_section/{tckr}", apc.HandleGradeSection)
 
+	// Rubric CRUD (plain JSON, not SSE)
+	mux.HandleFunc("POST /rubric/{rubric_category}", apc.HandleRubric)
+	mux.HandleFunc("PATCH /rubric/{rubric_category}", apc.HandleRubric)
+	mux.HandleFunc("DELETE /rubric/{rubric_category}", apc.HandleRubric)
+	mux.HandleFunc("POST /rubric/{rubric_category}/sub_agent", apc.HandleRubric)
+	mux.HandleFunc("PATCH /rubric/{rubric_category}/sub_agent", apc.HandleRubric)
+	mux.HandleFunc("DELETE /rubric/{rubric_category}/sub_agent", apc.HandleRubric)
+
 	// Review pipeline routes
 	mux.HandleFunc("GET /review-pipeline/health", rpc.HandleHealth)
 	mux.HandleFunc("POST /review/{tckr}", rpc.HandleReview)

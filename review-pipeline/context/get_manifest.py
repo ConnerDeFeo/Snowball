@@ -28,14 +28,24 @@ def get_findings_manifest(tckr: str, start_year: int, end_year: int) -> str:
     return "\n".join(lines)
 
 def get_grade_manifest(tckr: str, start_year: int, end_year: int) -> str:
-    """List each rubric category's grade for the given ticker/year range."""
+    """List each rubric category's grade for the given ticker/year range, keeping
+    only the latest version of each grade (a rubric edit bumps the version and
+    leaves the old row in place, so without this the same category would show
+    up once per version)."""
     prefix = f"{start_year}#{end_year}#"
     items = section_grades_table.query(tckr, prefix)
-    manifest = [
-        {
-            "rubric_category": item["category_period"].split("#")[-1],
-            "grade": item["grade"],
-        }
-        for item in items
-    ]
-    return "\n".join(f"{item['rubric_category']}: {item['grade']}" for item in manifest)
+
+    latest_by_category: dict[str, dict] = {}
+    for item in items:
+        category = item["category_period"].split("#")[2]
+        current = latest_by_category.get(category)
+        if current is None or (
+            section_grades_table.version_sort_key(item["category_period"])
+            > section_grades_table.version_sort_key(current["category_period"])
+        ):
+            latest_by_category[category] = item
+
+    return "\n".join(
+        f"{category}: {item['grade']}"
+        for category, item in sorted(latest_by_category.items())
+    )
