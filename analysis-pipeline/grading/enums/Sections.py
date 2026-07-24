@@ -1,5 +1,7 @@
 from enum import Enum
 
+from document_retrieval.FormType import FormType
+
 type Section = TenQSection | TenKSection
 
 class TenKSection(Enum):
@@ -37,3 +39,22 @@ class TenQSection(Enum):
     PART_II_ITEM_4 = "part_ii_item_4"
     PART_II_ITEM_5 = "part_ii_item_5"
     PART_II_ITEM_6 = "part_ii_item_6"
+
+# TenKSection/TenQSection share string values, so the form type decides which
+# enum a given section string belongs to.
+def section_from_form(form: str, section: str) -> Section:
+    if form == FormType.TEN_K.value:
+        return TenKSection(section)
+    return TenQSection(section)
+
+# Form-qualified key used as the rubric_directions DynamoDB table's location
+# SK / META location string, e.g. "10-K#part_i_item_1". Disambiguates
+# TenKSection/TenQSection, which otherwise share string values.
+def section_location_key(section: Section) -> str:
+    form = FormType.TEN_K.value if isinstance(section, TenKSection) else FormType.TEN_Q.value
+    return f"{form}#{section.value}"
+
+# Inverse of section_location_key.
+def section_from_location_key(key: str) -> Section:
+    form, section = key.split("#", 1)
+    return section_from_form(form, section)

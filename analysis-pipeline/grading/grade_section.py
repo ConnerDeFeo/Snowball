@@ -4,8 +4,12 @@ from typing import Awaitable, Callable, Optional
 
 from document_retrieval.FormType import FormType
 from grading.enums.RubricCategory import RubricCategory
-from grading.enums.Sections import TenKSection, TenQSection
-from grading.constants.rubric_directions import BASE_INSTRUCTIONS, RUBRIC_DIRECTIONS
+from grading.enums.Sections import section_from_form
+from grading.rubric_directions import (
+    BASE_INSTRUCTIONS,
+    get_rubric_directions,
+    resolve_sub_agent_direction,
+)
 from grading.extract_findings import extract_findings
 from grading.fetch_sections import fetch_sections
 from grading import finding_cache
@@ -28,23 +32,18 @@ def _no_evidence(rubric_category: RubricCategory, start_year: int, end_year: int
         quotes=[],
     )
 
-# TenKSection/TenQSection share string values, so the block's form type
-# decides which enum a given section string belongs to.
-def _section_enum(form: str, section: str) -> TenKSection | TenQSection:
-    if form == FormType.TEN_K.value:
-        return TenKSection(section)
-    return TenQSection(section)
-
 # Runs the per-section sub-agent (extract_findings) on one fetched block and
 # packages the result as a SectionMeta. Called in parallel, once per block.
 # Checks the findings cache first so a previously graded block/category/section
-# (same prompt + model version) never re-triggers the Bedrock call.
-def _to_section_meta(tckr: str, block: dict, rubric_category: RubricCategory) -> SectionMeta:
-    section = _section_enum(block["form"], block["section"])
-    findings = finding_cache.get_cached(tckr, block, rubric_category, section)
+# (same prompt + model version) never re-triggers the Bedrock call. `cfg` is the
+# rubric config already loaded once for this run (grade_section step 2).
+def _to_section_meta(tckr: str, block: dict, rubric_category: RubricCategory, cfg: dict) -> SectionMeta:
+    section = section_from_form(block["form"], block["section"])
+    direction = resolve_sub_agent_direction(cfg, block["form"], section)
+    findings = finding_cache.get_cached(tckr, block, rubric_category, section, direction)
     if findings is None:
-        findings = extract_findings(block["text"], rubric_category, section)
-        finding_cache.store(tckr, block, rubric_category, section, findings)
+        findings = extract_findings(block["text"], rubric_category, section, direction)
+        finding_cache.store(tckr, block, rubric_category, section, direction, findings)
     return SectionMeta(
         filing_type=FormType(block["form"]),
         section=section,
@@ -79,7 +78,7 @@ async def grade_section(
 
     # 2. Look up where to look (section locations) and what to look for
     # (directions) for this rubric category.
-    cfg = RUBRIC_DIRECTIONS.get(rubric_category)
+    cfg = await asyncio.to_thread(get_rubric_directions, rubric_category)
     if cfg is None:
         return _no_evidence(rubric_category, start_year, end_year, "No rubric directions defined yet for this category.")
 
@@ -102,7 +101,7 @@ async def grade_section(
     async def _run(block: dict) -> SectionMeta:
         nonlocal completed
         async with sem:
-            meta = await asyncio.to_thread(_to_section_meta, tckr, block, rubric_category)
+            meta = await asyncio.to_thread(_to_section_meta, tckr, block, rubric_category, cfg)
         if on_progress:
             completed += 1
             await on_progress({

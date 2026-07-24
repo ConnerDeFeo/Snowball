@@ -29,9 +29,10 @@ resource "aws_iam_instance_profile" "snowball_iam_profile" {
 
 resource "aws_iam_role_policy" "ec2_dynamodb" {
   for_each = {
-    documents      = aws_dynamodb_table.snowball_documents.arn
-    findings       = aws_dynamodb_table.snowball_findings.arn
-    section_grades = aws_dynamodb_table.snowball_section_grades.arn
+    documents         = aws_dynamodb_table.snowball_documents.arn
+    findings          = aws_dynamodb_table.snowball_findings.arn
+    section_grades    = aws_dynamodb_table.snowball_section_grades.arn
+    rubric_directions = aws_dynamodb_table.snowball_rubric_directions.arn
   }
 
   name = "snowball-ec2-dynamodb-${replace(each.key, "_", "-")}"

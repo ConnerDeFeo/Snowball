@@ -43,3 +43,20 @@ resource "aws_dynamodb_table" "snowball_section_grades" {
   }
 }
 
+resource "aws_dynamodb_table" "snowball_rubric_directions" {
+  name         = "snowball_rubric_directions"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "rubric_category"
+  range_key    = "sk"
+
+  attribute {
+    name = "rubric_category"
+    type = "S"
+  }
+
+  attribute {
+    name = "sk"
+    type = "S"
+  }
+}
+
