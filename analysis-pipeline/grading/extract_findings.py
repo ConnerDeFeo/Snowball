@@ -12,15 +12,23 @@ class FindingsResponse(BaseModel):
 # Extracts the given findings for the given section text. `direction` is the
 # already-resolved sub-agent direction for this rubric_category/section, so the
 # caller and the findings cache always agree on which prompt/version was used.
+#
+# The prompt is split around a Bedrock cachePoint: `cached_prefix` (section +
+# excerpt) is identical for every rubric category that reads this same block,
+# so only the first category grading a given block pays to process it; every
+# other category's call reads it back from cache. `tail` (category +
+# directions) is the part that actually varies per category.
 def extract_findings(section_text: str, rubric_category: RubricCategory, section: Section, direction: dict) -> FindingsResponse:
-    user_prompt = f"""
-      Category: {rubric_category.display}
+    cached_prefix = f"""
       Section: {section.value}
-      Directions: {direction["prompt"]}
 
       Excerpt:
       {section_text}
     """
+    tail = f"""
+      Category: {rubric_category.display}
+      Directions: {direction["prompt"]}
+    """
 
-    response = bedrock.invoke(SUB_AGENT_BASE_INSTRUCTIONS, user_prompt)
+    response = bedrock.invoke_cached(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix, tail)
     return FindingsResponse.model_validate_json(response)

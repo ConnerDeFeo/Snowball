@@ -1,66 +1,15 @@
 import asyncio
-import json
 from typing import Awaitable, Callable, Optional
 
-from enums.FormType import FormType
 from enums.RubricCategory import RubricCategory
-from enums.Sections import section_from_form
-from grading.rubric_directions import (
-    BASE_INSTRUCTIONS,
-    get_rubric_directions,
-    resolve_sub_agent_direction,
-)
-from grading.extract_findings import extract_findings
+from grading.rubric_directions import get_rubric_directions
+from grading.extract_section import extract_section_meta, label_section_meta
+from grading.aggregate_grade import aggregate_grade, no_evidence
 from grading.fetch_sections import fetch_sections
-from grading import finding_cache
 from grading import grade_store
 from grading.types.GradedTimePeriod import GradedTimePeriod
-from grading.types.SectionMeta import SectionMeta
-from utils import bedrock
 
 MAX_WORKERS = 8  # cap concurrent Bedrock sub-agent calls per grade_section run
-
-# Fallback result used whenever there's nothing to grade (no rubric yet, or no
-# cached filings) so grade_section never has to raise or return None.
-def _no_evidence(rubric_category: RubricCategory, start_year: int, end_year: int, reasoning: str) -> GradedTimePeriod:
-    return GradedTimePeriod(
-        category=rubric_category,
-        start=start_year,
-        end=end_year,
-        grade=0.0, 
-        reasoning=reasoning, 
-        quotes=[],
-    )
-
-# Runs the per-section sub-agent (extract_findings) on one fetched block and
-# packages the result as a SectionMeta. Called in parallel, once per block.
-# Checks the findings cache first so a previously graded block/category/section
-# (same prompt + model version) never re-triggers the Bedrock call. `cfg` is the
-# rubric config already loaded once for this run (grade_section step 2).
-def _to_section_meta(tckr: str, block: dict, rubric_category: RubricCategory, cfg: dict) -> SectionMeta:
-    section = section_from_form(block["form"], block["section"])
-    direction = resolve_sub_agent_direction(cfg, block["form"], section)
-    findings = finding_cache.get_cached(tckr, block, rubric_category, section, direction)
-    if findings is None:
-        findings = extract_findings(block["text"], rubric_category, section, direction)
-        finding_cache.store(tckr, block, rubric_category, section, direction, findings)
-    return SectionMeta(
-        filing_type=FormType(block["form"]),
-        section=section,
-        rubric_category=rubric_category,
-        finding=findings.findings,
-        notable_anomalies=findings.notable_anomalies,
-        section_present=True,  # fetch_sections only returns sections that exist
-    )
-
-# Attaches the filing label (form/year/quarter) fetch_sections already knew
-# onto the SectionMeta's findings, so the final grader prompt can cite dates.
-def _label_section_meta(block: dict, meta: SectionMeta) -> dict:
-    label = {"form": block["form"], "year": block["year"], "section": block["section"]}
-    if "quarter" in block:
-        label["quarter"] = block["quarter"]
-    label["findings"] = meta.model_dump(mode="json")
-    return label
 
 async def grade_section(
     tckr: str,
@@ -74,12 +23,9 @@ async def grade_section(
     # (directions) for this rubric category.
     cfg = await asyncio.to_thread(get_rubric_directions, rubric_category)
     if cfg is None:
-        return _no_evidence(rubric_category, start_year, end_year, "No rubric directions defined yet for this category.")
+        return no_evidence(rubric_category, start_year, end_year, "No rubric directions defined yet for this category.")
 
-    # 2. If this ticker/period/category has already been graded under the
-    # current rubric version, return the cached result instead of re-running
-    # the pipeline. An edited rubric bumps the version, so this is a cache
-    # miss until the next grade is produced.
+    # If already graded, pull cached from dynamo
     cached = await asyncio.to_thread(grade_store.load, tckr, start_year, end_year, rubric_category, cfg["version"])
     if cached is not None:
         return cached
@@ -87,7 +33,7 @@ async def grade_section(
     # 3. Pull the cached filing text for those locations within the date window.
     blocks = await asyncio.to_thread(fetch_sections, tckr, start_year, end_year, cfg["locations"])
     if not blocks:
-        return _no_evidence(rubric_category, start_year, end_year, "No cached filings found for this ticker/period.")
+        return no_evidence(rubric_category, start_year, end_year, "No cached filings found for this ticker/period.")
 
     total = len(blocks)
     if on_progress:
@@ -100,10 +46,10 @@ async def grade_section(
     sem = asyncio.Semaphore(MAX_WORKERS)
     completed = 0
 
-    async def _run(block: dict) -> SectionMeta:
+    async def _run(block: dict):
         nonlocal completed
         async with sem:
-            meta = await asyncio.to_thread(_to_section_meta, tckr, block, rubric_category, cfg)
+            meta = await asyncio.to_thread(extract_section_meta, tckr, block, rubric_category, cfg)
         if on_progress:
             completed += 1
             await on_progress({
@@ -119,32 +65,8 @@ async def grade_section(
 
     metas = await asyncio.gather(*[_run(block) for block in blocks])
 
-    # 5. Label each section's findings with its filing metadata (form/year/
-    # quarter) so the final grader can see how evidence is distributed over time.
-    labeled = [_label_section_meta(block, meta) for block, meta in zip(blocks, metas)]
+    # Turn data into actuall SetionMeta data structs
+    labeled = [label_section_meta(block, meta) for block, meta in zip(blocks, metas)]
 
-    # 6. Hand all the labeled findings to one final grading call, which scores
-    # the whole category/period based on the aggregated evidence.
-    user_prompt = f"""
-      Category: {cfg["name"]}
-      Directions: {cfg["directions"]}
-
-      Findings by filing:
-      {json.dumps(labeled, indent=2)}
-    """
-
-    response = await asyncio.to_thread(bedrock.invoke, BASE_INSTRUCTIONS, user_prompt)
-    parsed = json.loads(response)
-
-    graded = GradedTimePeriod(
-        category=rubric_category,
-        start=start_year,
-        end=end_year,
-        grade=float(parsed["grade"]),
-        reasoning=parsed["reasoning"],
-        quotes=parsed["quotes"],
-    )
-
-    # Persist the graded result so it can be looked up later without re-grading.
-    await asyncio.to_thread(grade_store.store, tckr, graded, cfg["version"])
-    return graded
+    # Finally call master agent to grade
+    return await asyncio.to_thread(aggregate_grade, tckr, rubric_category, cfg, labeled, start_year, end_year)

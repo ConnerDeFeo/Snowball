@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from enums.RubricCategory import RubricCategory
 from grading.grade_section import grade_section
+from grading.grade_company import grade_company
 from utils.sse import sse_response
 
 router = APIRouter()
@@ -16,3 +17,12 @@ async def grade_section_route(
         return {"type": "result", "graded": graded.model_dump(mode="json")}
 
     return sse_response(job) # Immeditley return the job
+
+
+@router.get("/grade_all/{tckr}")
+async def grade_all_route(tckr: str, start_year: int, end_year: int):
+    async def job(on_progress):
+        graded = await grade_company(tckr, start_year, end_year, on_progress=on_progress)
+        return {"type": "result", "graded": [g.model_dump(mode="json") for g in graded]}
+
+    return sse_response(job)

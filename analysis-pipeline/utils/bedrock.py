@@ -7,12 +7,16 @@ MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 client = boto3.client("bedrock-runtime")
 logger = logging.getLogger(__name__)
 
-def invoke(system: str, user: str) -> str:
+# Shared converse call + logging, driven off already-built content blocks so
+# callers can either send one plain text block (invoke) or a cached-prefix +
+# cachePoint + tail split (invoke_cached) without duplicating the request/
+# logging plumbing.
+def _converse(system: str, content: list[dict]) -> str:
     start = time.perf_counter()
     response = client.converse(
         modelId=MODEL_ID,
         system=[{"text": system}],
-        messages=[{"role": "user", "content": [{"text": user}]}],
+        messages=[{"role": "user", "content": content}],
     )
     elapsed = time.perf_counter() - start
     usage = response["usage"]
@@ -33,6 +37,21 @@ def invoke(system: str, user: str) -> str:
     )
     text = response["output"]["message"]["content"][0]["text"]
     return _strip_code_fence(text)
+
+def invoke(system: str, user: str) -> str:
+    return _converse(system, [{"text": user}])
+
+# Same call, but splits the prompt into a cached prefix and a variable tail
+# around a cachePoint. Callers must keep `cached_prefix` byte-identical across
+# invocations that should share the cache (e.g. the same filing excerpt read
+# by multiple rubric categories).
+def invoke_cached(system: str, cached_prefix: str, tail: str) -> str:
+    content = [
+        {"text": cached_prefix},
+        {"cachePoint": {"type": "default"}},
+        {"text": tail},
+    ]
+    return _converse(system, content)
 
 # Bedrock sometimes wraps JSON responses in a markdown code fence
 # (```json ... ```) despite instructions not to. Strip it so callers can
