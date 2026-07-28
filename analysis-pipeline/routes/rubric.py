@@ -22,6 +22,16 @@ class SubAgentRequest(BaseModel):
     prompt: str
 
 
+@router.get("/rubric")
+def get_all_rubrics():
+    return rubric_section.get_all()
+
+
+@router.get("/rubric/{rubric_category}")
+def get_rubric(rubric_category: RubricCategory):
+    return rubric_section.get(rubric_category)
+
+
 @router.post("/rubric/{rubric_category}")
 def create_rubric(rubric_category: RubricCategory, req: RubricCreateRequest):
     version = rubric_section.create(rubric_category, req.name, req.directions)

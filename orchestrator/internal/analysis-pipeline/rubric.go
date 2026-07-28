@@ -7,8 +7,8 @@ import (
 )
 
 // HandleRubric forwards rubric CRUD requests to the analysis pipeline. One
-// handler serves all six routes (rubric + sub_agent, POST/PATCH/DELETE) since
-// they all forward the same way: same path, same method, same body.
+// handler serves all eight routes (rubric + sub_agent, GET/POST/PATCH/DELETE)
+// since they all forward the same way: same path, same method, same body.
 func (c *Client) HandleRubric(w http.ResponseWriter, r *http.Request) {
 	url := c.baseURL + r.URL.Path
 

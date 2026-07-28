@@ -13,6 +13,41 @@ from utils.dynamo import rubric_directions_table
 META_SK = "META"
 
 
+# Shapes one category's partition (META + sub-agent rows) into a response body.
+# Keyed by raw SK ("10-K#part_i_item_1") rather than parsed back into Section
+# enums the way grading/rubric_directions.py does — the SK is already a plain
+# JSON-safe string.
+def _shape(category: str, items: list[dict]) -> dict | None:
+    meta = next((i for i in items if i["sk"] == META_SK), None)
+    if meta is None:
+        return None
+    return {
+        "rubric_category": category,
+        "name": meta["name"],
+        "directions": meta["directions"],
+        "version": meta["version"],
+        "sub_agent_directions": {
+            i["sk"]: {"prompt": i["prompt"], "version": i["version"]}
+            for i in items if i["sk"] != META_SK
+        },
+    }
+
+
+def get(category: RubricCategory) -> dict:
+    shaped = _shape(category.value, rubric_directions_table.query_category(category.value))
+    if shaped is None:
+        raise HTTPException(status_code=404, detail=f"rubric {category.value} not found")
+    return shaped
+
+
+def get_all() -> list[dict]:
+    grouped: dict[str, list[dict]] = {}
+    for item in rubric_directions_table.scan_all():
+        grouped.setdefault(item["rubric_category"], []).append(item)
+    shaped = (_shape(cat, items) for cat, items in grouped.items())
+    return sorted((s for s in shaped if s is not None), key=lambda s: s["rubric_category"])
+
+
 def create(category: RubricCategory, name: str, directions: str) -> str:
     version = "v1"
     try:

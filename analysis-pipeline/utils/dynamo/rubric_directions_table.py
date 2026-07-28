@@ -10,6 +10,13 @@ def query_category(rubric_category: str) -> list[dict]:
     response = table.query(KeyConditionExpression=Key("rubric_category").eq(rubric_category))
     return response.get("Items", [])
 
+# Fetches every item across every rubric category in one round trip. The table
+# is small (one partition per category), so a scan is cheaper than a query per
+# category.
+def scan_all() -> list[dict]:
+    response = table.scan()
+    return response.get("Items", [])
+
 def get(rubric_category: str, sk: str) -> dict | None:
     response = table.get_item(Key={"rubric_category": rubric_category, "sk": sk})
     return response.get("Item")
