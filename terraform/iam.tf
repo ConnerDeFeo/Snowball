@@ -46,6 +46,9 @@ resource "aws_iam_role_policy" "ec2_dynamodb" {
         "dynamodb:GetItem",
         "dynamodb:PutItem",
         "dynamodb:Query",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan"
       ]
       Resource = each.value
     }]
