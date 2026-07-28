@@ -7,14 +7,14 @@ from grading import finding_cache
 from grading.types.SectionMeta import SectionMeta
 
 # Get the section information that is needed for the rubric category
-def extract_section_meta(tckr: str, block: dict, rubric_category: RubricCategory, cfg: dict) -> SectionMeta:
+def extract_section_meta(tckr: str, block: dict, rubric_category: RubricCategory, cfg: dict, use_cache: bool = True) -> SectionMeta:
     section = section_from_form(block["form"], block["section"])
     direction = resolve_sub_agent_direction(cfg, block["form"], section)
     findings = finding_cache.get_cached(tckr, block, rubric_category, section, direction)
     # If already extracted, just reutrn cached
     if findings is None:
         block_label = f"{tckr}/{block['form']}/{block['year']}" + (f"Q{block['quarter']}" if "quarter" in block else "") + f"/{block['section']}"
-        findings = extract_findings(block["text"], rubric_category, section, direction, block_label=block_label)
+        findings = extract_findings(block["text"], rubric_category, section, direction, block_label=block_label, use_cache=use_cache)
         finding_cache.store(tckr, block, rubric_category, section, direction, findings)
     return SectionMeta(
         filing_type=FormType(block["form"]),

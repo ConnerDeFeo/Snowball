@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Awaitable, Callable, Optional
 
 from enums.RubricCategory import RubricCategory
@@ -10,6 +11,8 @@ from grading.fetch_sections import fetch_sections
 from grading import grade_store
 from grading.types.GradedTimePeriod import GradedTimePeriod
 from grading.types.SectionMeta import SectionMeta
+
+logger = logging.getLogger(__name__)
 
 MAX_WORKERS = 8  # cap concurrent Bedrock sub-agent calls per block, same as grade_section
 
@@ -65,12 +68,22 @@ async def grade_company(
     metas: dict[RubricCategory, list[tuple[dict, SectionMeta]]] = {c: [] for c in to_grade}
     sem = asyncio.Semaphore(MAX_WORKERS)
 
-    # Complete a section for a given category
-    async def _run(block: dict, category: RubricCategory) -> None:
+    # Complete a section for a given category. A single block/category can fail
+    # (e.g. Bedrock returning unparseable JSON after retries) without aborting
+    # the rest of the company grade — it's just skipped, so that category ends
+    # up with less evidence for this block instead of no results at all.
+    async def _run(block: dict, category: RubricCategory, use_cache: bool) -> None:
         nonlocal completed
-        async with sem:
-            meta = await asyncio.to_thread(extract_section_meta, tckr, block, category, to_grade[category])
-        metas[category].append((block, meta))
+        try:
+            async with sem:
+                meta = await asyncio.to_thread(extract_section_meta, tckr, block, category, to_grade[category], use_cache)
+        except Exception:
+            logger.exception(
+                "skipping block/category after extraction failure: tckr=%s form=%s year=%s section=%s category=%s",
+                tckr, block["form"], block["year"], block["section"], category.value,
+            )
+        else:
+            metas[category].append((block, meta))
         completed += 1
         if on_progress:
             await on_progress({
@@ -84,14 +97,18 @@ async def grade_company(
                 "category": category.value,
             })
 
-    # For each block(section_text) and category, if there are multiple categories sharing a section, 
-    # Run and cache the first section sync, then the rest asyn off the cache
+    # For each block(section_text) and category, if there are multiple categories sharing a section,
+    # Run and cache the first section sync, then the rest asyn off the cache.
+    # use_cache is only True when a second category will actually read the
+    # cachePoint back — a lone category paying the 1.25x cache-write premium
+    # for a block nothing else reads is pure waste.
     for block, categories in block_categories:
         first, rest = categories[0], categories[1:]
-        await _run(block, first)
+        use_cache = len(categories) > 1
+        await _run(block, first, use_cache)
         if rest:
             # Start unpacks list ito gather, does not take list
-            await asyncio.gather(*[_run(block, category) for category in rest])
+            await asyncio.gather(*[_run(block, category, use_cache) for category in rest])
 
     # 5. Aggregate each to-grade category's collected findings into its final
     # grade, same as grade_section step 6.
