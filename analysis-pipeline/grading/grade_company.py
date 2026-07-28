@@ -27,20 +27,27 @@ async def grade_company(
     end_year: int,
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
 ) -> list[GradedTimePeriod]:
-    # Get each rubric category that exists in dynamo db
-    results: list[GradedTimePeriod] = []
-    to_grade: dict[RubricCategory, dict] = {}
-    for category in RubricCategory:
+    # Get each rubric category that exists in dynamo db. Config lookup + cache
+    # check for each category is independent, so gather them instead of
+    # awaiting one category at a time.
+    async def _load(category: RubricCategory) -> tuple[RubricCategory, Optional[dict], Optional[GradedTimePeriod]]:
         cfg = await asyncio.to_thread(get_rubric_directions, category)
         if cfg is None:
-            continue
-        # Check if already graded
+            return category, None, None
         cached = await asyncio.to_thread(grade_store.load, tckr, start_year, end_year, category, cfg["version"])
+        return category, cfg, cached
 
-        # If so add to results
+    loaded = await asyncio.gather(*[_load(category) for category in RubricCategory])
+
+    results: list[GradedTimePeriod] = []
+    to_grade: dict[RubricCategory, dict] = {}
+    for category, cfg, cached in loaded:
+        if cfg is None:
+            continue
+        # If already graded, add to results
         if cached is not None:
             results.append(cached)
-        # Else add to the querey pipeline
+        # Else add to the query pipeline
         else:
             to_grade[category] = cfg
 
@@ -59,20 +66,28 @@ async def grade_company(
         # Get all categories that a given section belongs to
         return [c for c, cfg in to_grade.items() if section in cfg["locations"]]
 
-    # Section, all categories that need that section
-    block_categories = [(block, _categories_for(block)) for block in blocks]
+    # Section, all categories that need that section. Filter out blocks that map
+    # to no to-grade category — under gather below, an empty list would raise
+    # IndexError on categories[0] and abort the whole company grade instead of
+    # just skipping one block.
+    block_categories = [(block, cats) for block in blocks if (cats := _categories_for(block))]
     # Get total bedrock calls
     total_calls = sum(len(cats) for _, cats in block_categories)
     completed = 0
-    # Dict of categories : list of tuples of (section_text(block), SectionMeta(result))
-    metas: dict[RubricCategory, list[tuple[dict, SectionMeta]]] = {c: [] for c in to_grade}
+    # Dict of categories : list of (section_text(block), SectionMeta(result)) slots,
+    # one slot per block, indexed by block position. Preallocated (rather than
+    # appended) so aggregation below sees findings in the same order every run,
+    # regardless of which block's Bedrock call happens to finish first.
+    metas: dict[RubricCategory, list[Optional[tuple[dict, SectionMeta]]]] = {
+        c: [None] * len(block_categories) for c in to_grade
+    }
     sem = asyncio.Semaphore(MAX_WORKERS)
 
     # Complete a section for a given category. A single block/category can fail
     # (e.g. Bedrock returning unparseable JSON after retries) without aborting
     # the rest of the company grade — it's just skipped, so that category ends
     # up with less evidence for this block instead of no results at all.
-    async def _run(block: dict, category: RubricCategory, use_cache: bool) -> None:
+    async def _run(index: int, block: dict, category: RubricCategory, use_cache: bool) -> None:
         nonlocal completed
         try:
             async with sem:
@@ -83,7 +98,7 @@ async def grade_company(
                 tckr, block["form"], block["year"], block["section"], category.value,
             )
         else:
-            metas[category].append((block, meta))
+            metas[category][index] = (block, meta)
         completed += 1
         if on_progress:
             await on_progress({
@@ -97,28 +112,41 @@ async def grade_company(
                 "category": category.value,
             })
 
-    # For each block(section_text) and category, if there are multiple categories sharing a section,
-    # Run and cache the first section sync, then the rest asyn off the cache.
-    # use_cache is only True when a second category will actually read the
-    # cachePoint back — a lone category paying the 1.25x cache-write premium
-    # for a block nothing else reads is pure waste.
-    for block, categories in block_categories:
+    # Blocks are independent — each has its own cachePoint — so they run
+    # concurrently across the whole company. use_cache is only True when a
+    # second category will actually read the cachePoint back — a lone category
+    # paying the 1.25x cache-write premium for a block nothing else reads is
+    # pure waste. Within a block, the first category still runs alone to write
+    # the cachePoint before the rest read off it; asyncio.Semaphore is FIFO, so
+    # an early block's "rest" calls can queue behind later blocks' "first"
+    # calls, but that's at most a ~40-80s gap at MAX_WORKERS=8, well inside the
+    # ~5min cachePoint TTL.
+    async def _run_block(index: int, block: dict, categories: list[RubricCategory]) -> None:
         first, rest = categories[0], categories[1:]
         use_cache = len(categories) > 1
-        await _run(block, first, use_cache)
+        await _run(index, block, first, use_cache)
         if rest:
             # Start unpacks list ito gather, does not take list
-            await asyncio.gather(*[_run(block, category, use_cache) for category in rest])
+            await asyncio.gather(*[_run(index, block, category, use_cache) for category in rest])
+
+    await asyncio.gather(*[
+        _run_block(index, block, categories)
+        for index, (block, categories) in enumerate(block_categories)
+    ])
 
     # 5. Aggregate each to-grade category's collected findings into its final
-    # grade, same as grade_section step 6.
-    for category, cfg in to_grade.items():
-        blocks_metas = metas[category]
+    # grade, same as grade_section step 6. Categories are independent of each
+    # other, so run their aggregate Bedrock calls concurrently too, sharing the
+    # same semaphore as extraction so total in-flight Bedrock calls stay capped.
+    async def _aggregate(category: RubricCategory, cfg: dict) -> GradedTimePeriod:
+        blocks_metas = [m for m in metas[category] if m is not None]
         if not blocks_metas:
-            results.append(no_evidence(category, start_year, end_year, "No cached filings found for this ticker/period."))
-            continue
+            return no_evidence(category, start_year, end_year, "No cached filings found for this ticker/period.")
         labeled = [label_section_meta(block, meta) for block, meta in blocks_metas]
-        graded = await asyncio.to_thread(aggregate_grade, tckr, category, cfg, labeled, start_year, end_year)
-        results.append(graded)
+        async with sem:
+            return await asyncio.to_thread(aggregate_grade, tckr, category, cfg, labeled, start_year, end_year)
+
+    aggregated = await asyncio.gather(*[_aggregate(category, cfg) for category, cfg in to_grade.items()])
+    results.extend(aggregated)
 
     return results
