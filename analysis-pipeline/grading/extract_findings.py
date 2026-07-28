@@ -18,7 +18,7 @@ class FindingsResponse(BaseModel):
 # so only the first category grading a given block pays to process it; every
 # other category's call reads it back from cache. `tail` (category +
 # directions) is the part that actually varies per category.
-def extract_findings(section_text: str, rubric_category: RubricCategory, section: Section, direction: dict) -> FindingsResponse:
+def extract_findings(section_text: str, rubric_category: RubricCategory, section: Section, direction: dict, block_label: str = "") -> FindingsResponse:
     cached_prefix = f"""
       Section: {section.value}
 
@@ -30,5 +30,6 @@ def extract_findings(section_text: str, rubric_category: RubricCategory, section
       Directions: {direction["prompt"]}
     """
 
-    response = bedrock.invoke_cached(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix, tail)
+    label = f"block={block_label} category={rubric_category.value}"
+    response = bedrock.invoke_cached(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix, tail, label=label)
     return FindingsResponse.model_validate_json(response)
