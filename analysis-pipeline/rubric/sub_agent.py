@@ -20,6 +20,10 @@ def _sk(form: str, section: str) -> str:
 
 def create(category: RubricCategory, form: str, section: str, prompt: str) -> str:
     sk = _sk(form, section)
+    # This location becomes part of the category's grading scope (see
+    # grading/rubric_directions.py), so bump META's version before writing the
+    # row — 404s closed instead of widening scope on a write that then errors.
+    rubric_section.bump_version(category)
     version = "v1"
     try:
         rubric_directions_table.create(category.value, sk, prompt=prompt, version=version)
@@ -52,4 +56,8 @@ def edit(category: RubricCategory, form: str, section: str, prompt: str) -> str:
 
 def delete(category: RubricCategory, form: str, section: str) -> None:
     sk = _sk(form, section)
+    # Removing this location shrinks the category's grading scope, so bump
+    # META first (see create, above). This also 404s if the category has no
+    # META row, which delete previously never did.
+    rubric_section.bump_version(category)
     rubric_directions_table.delete(category.value, sk)

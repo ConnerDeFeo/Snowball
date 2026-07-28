@@ -10,12 +10,10 @@ router = APIRouter()
 class RubricCreateRequest(BaseModel):
     name: str
     directions: str
-    locations: list[str]
 
 
 class RubricEditRequest(BaseModel):
     directions: str | None = None
-    locations: list[str] | None = None
 
 
 class SubAgentRequest(BaseModel):
@@ -26,13 +24,13 @@ class SubAgentRequest(BaseModel):
 
 @router.post("/rubric/{rubric_category}")
 def create_rubric(rubric_category: RubricCategory, req: RubricCreateRequest):
-    version = rubric_section.create(rubric_category, req.name, req.directions, req.locations)
+    version = rubric_section.create(rubric_category, req.name, req.directions)
     return {"version": version}
 
 
 @router.patch("/rubric/{rubric_category}")
 def edit_rubric(rubric_category: RubricCategory, req: RubricEditRequest):
-    version = rubric_section.edit(rubric_category, req.directions, req.locations)
+    version = rubric_section.edit(rubric_category, req.directions)
     return {"version": version}
 
 

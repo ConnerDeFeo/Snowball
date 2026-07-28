@@ -1,12 +1,12 @@
 #!/bin/bash
 curl -X POST http://localhost:8080/rubric/revenue_durability \
   -H "Content-Type: application/json" \
-  -d '{"name": "Revenue durability", "directions": "Determine what share of revenue is contractual, recurring, or subscription-based versus one-time or project-based, and how much visibility management has into future revenue (backlog, deferred revenue, remaining performance obligations).", "locations": ["10-K#part_i_item_1", "10-K#part_ii_item_7", "10-K#part_ii_item_8"]}' \
+  -d '{"name": "Revenue durability", "directions": "Determine what share of revenue is contractual, recurring, or subscription-based versus one-time or project-based, and how much visibility management has into future revenue (backlog, deferred revenue, remaining performance obligations)."}' \
   -w '\n'
 
 curl -X POST http://localhost:8080/rubric/revenue_quality \
   -H "Content-Type: application/json" \
-  -d '{"name": "Revenue quality", "directions": "Assess whether reported revenue reflects real cash-backed demand versus aggressive recognition timing, non-recurring gains, or channel-stuffing, using the recognition footnote and any MD&A caveats.", "locations": ["10-K#part_ii_item_7", "10-K#part_ii_item_8", "10-Q#part_i_item_1", "10-Q#part_i_item_2"]}' \
+  -d '{"name": "Revenue quality", "directions": "Assess whether reported revenue reflects real cash-backed demand versus aggressive recognition timing, non-recurring gains, or channel-stuffing, using the recognition footnote and any MD&A caveats."}' \
   -w '\n'
 
 curl -X POST http://localhost:8080/rubric/revenue_durability/sub_agent \

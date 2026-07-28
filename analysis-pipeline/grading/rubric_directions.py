@@ -55,11 +55,15 @@ DEFAULT_SUB_AGENT_DIRECTIONS = {
     "version": "v1",
 }
 
-# Loads a rubric category's META item (name/directions/locations) plus every
+# Loads a rubric category's META item (name/directions) plus every
 # per-section sub-agent direction from the snowball_rubric_directions table,
 # and shapes them into the dict grade_section/etc consume. Queried fresh every
 # call (no process-level caching) so an operator's prompt edit is picked up on
 # the very next grading run, without a redeploy.
+#
+# `locations` is derived from the sub-agent rows' SKs rather than stored on
+# META — a location only exists because some sub-agent prompt targets it, so
+# the two were always the same data kept in sync by hand.
 #
 # Returns None if the category has no META item yet (mirrors the old
 # RUBRIC_DIRECTIONS.get(...) is None behavior).
@@ -73,7 +77,7 @@ def get_rubric_directions(rubric_category: RubricCategory) -> dict | None:
     return {
         "name": meta["name"],
         "directions": meta["directions"],
-        "locations": [section_from_location_key(key) for key in meta["locations"]],
+        "locations": [section_from_location_key(key) for key in sub_agent_directions],
         "sub_agent_directions": sub_agent_directions,
         "version": meta["version"],
     }

@@ -39,3 +39,8 @@ def update(rubric_category: str, sk: str, **fields) -> None:
 
 def delete(rubric_category: str, sk: str) -> None:
     table.delete_item(Key={"rubric_category": rubric_category, "sk": sk})
+
+# Deletes every item in a category's partition (META + all sub-agent rows).
+def delete_category(rubric_category: str) -> None:
+    for item in query_category(rubric_category):
+        delete(rubric_category, item["sk"])
