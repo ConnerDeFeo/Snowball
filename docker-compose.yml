@@ -1,4 +1,3 @@
-# The different containers that will be running
 services:
   localstack:
     image: localstack/localstack:4.4.0
@@ -8,34 +7,44 @@ services:
       - SERVICES=dynamodb,s3
     volumes:
       - ./localstack-init:/etc/localstack/init/ready.d
+
   review-pipeline:
     build:
       context: ./review-pipeline
       dockerfile: dockerfile
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=us-east-2
+    volumes:
+      - ~/.aws:/root/.aws:ro
+
   analysis-pipeline:
     build:
       context: ./analysis-pipeline
       dockerfile: dockerfile
     secrets:
       - EDGAR_IDENTITY
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=us-east-2
+    volumes:
+      - ~/.aws:/root/.aws:ro
+
   orchestrator:
-    # Docker build
     build:
       context: ./orchestrator
       dockerfile: dockerfile
-    # port exposure
     ports:
       - "8080:8080"
-    # Server talks to analysis-pipeline through the internal docker network
     environment:
       ANALYSIS_PIPELINE_URL: "http://analysis-pipeline:8000"
       REVIEW_PIPELINE_URL: "http://review-pipeline:8000"
-    # This container cannot run without analysis pipeline
     depends_on:
       - analysis-pipeline
       - review-pipeline
 
-# Define relevant secrets needed
 secrets:
   EDGAR_IDENTITY:
     file: ./secrets/EDGAR_IDENTITY.txt
