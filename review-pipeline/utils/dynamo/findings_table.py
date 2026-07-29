@@ -1,9 +1,10 @@
-import boto3
+from utils.aws_clients import dynamo_client
 from boto3.dynamodb.conditions import Key
 from utils.dynamo.split_key import split_key
 
 TABLE_NAME = "snowball_findings"
-table = boto3.resource('dynamodb').Table(TABLE_NAME)
+client = dynamo_client
+table = client.Table(TABLE_NAME)
 
 def get(tckr: str, finding_key: str) -> dict | None:
     response = table.get_item(Key={"tckr": tckr, "finding_key": finding_key})

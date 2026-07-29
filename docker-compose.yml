@@ -16,8 +16,11 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_DEFAULT_REGION=us-east-2
+      - AWS_ENDPOINT_URL=http://localstack:4566
     volumes:
       - ~/.aws:/root/.aws:ro
+    depends_on:
+      - localstack
 
   analysis-pipeline:
     build:
@@ -29,8 +32,11 @@ services:
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_DEFAULT_REGION=us-east-2
+      - AWS_ENDPOINT_URL=http://localstack:4566
     volumes:
       - ~/.aws:/root/.aws:ro
+    depends_on:
+      - localstack
 
   orchestrator:
     build:
