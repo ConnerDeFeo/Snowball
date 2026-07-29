@@ -5,7 +5,7 @@ import boto3
 _LOCAL_ENDPOINT = os.getenv("AWS_ENDPOINT_URL")
 
 def dynamo_client():
-    return boto3.client("dynamodb", endpoint_url=_LOCAL_ENDPOINT)
+    return boto3.resource("dynamodb", endpoint_url=_LOCAL_ENDPOINT)
 
 def s3_client():
     return boto3.client("s3", endpoint_url=_LOCAL_ENDPOINT)
