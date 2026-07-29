@@ -1,5 +1,13 @@
 # The different containers that will be running
 services:
+  localstack:
+    image: localstack/localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=dynamodb,s3
+    volumes:
+      - ./localstack-init:/etc/localstack/init/ready.d
   review-pipeline:
     build:
       context: ./review-pipeline
