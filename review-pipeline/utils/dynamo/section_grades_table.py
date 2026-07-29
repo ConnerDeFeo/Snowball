@@ -3,7 +3,7 @@ from boto3.dynamodb.conditions import Key
 from utils.dynamo.split_key import split_key
 
 TABLE_NAME = "snowball_section_grades"
-client = dynamo_client
+client = dynamo_client()
 table = client.Table(TABLE_NAME)
 
 def get(tckr: str, category_period: str) -> dict | None:

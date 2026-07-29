@@ -6,14 +6,15 @@ services:
     environment:
       - SERVICES=dynamodb,s3
     volumes:
-      - ./localstack-init:/etc/localstack/init/ready.d
+      - ./scripts/localstack-init:/etc/localstack/init/ready.d
 
   review-pipeline:
     build:
       context: ./review-pipeline
       dockerfile: dockerfile
     environment:
-      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ENDPOINT_LOCAL_URL=http://localstack:4566
+      - AWS_DEFAULT_REGION=us-east-2
     volumes:
       - ~/.aws:/root/.aws:ro
     depends_on:
@@ -26,7 +27,8 @@ services:
     secrets:
       - EDGAR_IDENTITY
     environment:
-      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_ENDPOINT_LOCAL_URL=http://localstack:4566
+      - AWS_DEFAULT_REGION=us-east-2
     volumes:
       - ~/.aws:/root/.aws:ro
     depends_on:

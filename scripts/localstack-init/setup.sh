@@ -1,4 +1,6 @@
 #!/bin/bash
+export AWS_DEFAULT_REGION=us-east-2
+
 awslocal s3 mb s3://snowball-documents-bucket
 
 awslocal dynamodb create-table \
