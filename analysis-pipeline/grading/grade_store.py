@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from enums.RubricCategory import RubricCategory
 from grading.types.GradedTimePeriod import GradedTimePeriod
-from utils.dynamo import section_grades_table
+from utils.dynamo import companies_table, section_grades_table
 
 # Identifies which category/period/rubric-version this graded result covers,
 # under one ticker. The rubric version is included so editing a rubric (which
@@ -29,13 +29,17 @@ def load(tckr: str, start: int, end: int, category: RubricCategory, version: str
 
 # Persists a graded time period so it can be looked up later without re-running
 # the grading pipeline. grade is stored as Decimal since the boto3 DynamoDB
-# resource rejects Python floats.
+# resource rejects Python floats. Also upserts the ticker into the companies
+# table so it shows up in GET /companies; a grade_all run does this once per
+# category, which is a harmless idempotent overwrite.
 def store(tckr: str, graded: GradedTimePeriod, version: str) -> None:
+    now = datetime.now(timezone.utc).isoformat()
     section_grades_table.put(
         tckr,
         _category_period(graded.start, graded.end, graded.category, version),
         grade=Decimal(str(graded.grade)),
         reasoning=graded.reasoning,
         quotes=graded.quotes,
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=now,
     )
+    companies_table.upsert(tckr, graded.start, graded.end, now)

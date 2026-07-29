@@ -60,3 +60,30 @@ resource "aws_dynamodb_table" "snowball_rubric_directions" {
   }
 }
 
+resource "aws_dynamodb_table" "snowball_companies" {
+  name         = "snowball_companies"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "tckr"
+
+  attribute {
+    name = "tckr"
+    type = "S"
+  }
+}
+
+resource "aws_dynamodb_table" "snowball_review_sessions" {
+  name         = "snowball_review_sessions"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "session_id"
+
+  attribute {
+    name = "session_id"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "expires_at"
+    enabled        = true
+  }
+}
+

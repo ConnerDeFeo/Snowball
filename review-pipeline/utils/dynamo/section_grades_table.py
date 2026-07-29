@@ -13,12 +13,21 @@ def get(tckr: str, category_period: str) -> dict | None:
 def put(tckr: str, category_period: str, **fields):
     table.put_item(Item={"tckr": tckr, "category_period": category_period, **fields})
 
+# Paginates past DynamoDB's 1MB-per-response cap — grade items carry full
+# reasoning/quotes text, so a single unpaginated call can silently truncate
+# what get_grade_manifest (and the review agent) sees.
 def query(tckr: str, category_period_prefix: str) -> list[dict]:
-    response = table.query(
-        KeyConditionExpression=Key("tckr").eq(tckr)
+    items = []
+    kwargs = {
+        "KeyConditionExpression": Key("tckr").eq(tckr)
         & Key("category_period").begins_with(category_period_prefix)
-    )
-    return response.get("Items", [])
+    }
+    while True:
+        response = table.query(**kwargs)
+        items.extend(response.get("Items", []))
+        if "LastEvaluatedKey" not in response:
+            return items
+        kwargs["ExclusiveStartKey"] = response["LastEvaluatedKey"]
 
 # category_period is "{start}#{end}#{rubric_category}#{version}". Older rows
 # written before the version segment was added only have 3 parts — treat

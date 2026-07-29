@@ -1,5 +1,6 @@
 import Header from '../shared/Header'
 import GradeCompanyForm from '../features/home/GradeCompanyForm'
+import RecentCompanies from '../features/home/RecentCompanies'
 
 function Home() {
   return (
@@ -15,6 +16,7 @@ function Home() {
           </p>
         </div>
         <GradeCompanyForm />
+        <RecentCompanies />
       </main>
     </div>
   )

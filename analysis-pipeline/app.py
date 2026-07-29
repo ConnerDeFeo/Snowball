@@ -2,7 +2,9 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI
+from routes.companies import router as companies_router
 from routes.document_retrieval import router as document_retrieval_router
+from routes.grades import router as grades_router
 from routes.grading import router as grading_router
 from routes.health import router as health_router
 from routes.rubric import router as rubric_router
@@ -17,7 +19,9 @@ logger = logging.getLogger(__name__)
 def create_app():
     app = FastAPI()
 
+    app.include_router(companies_router)
     app.include_router(document_retrieval_router)
+    app.include_router(grades_router)
     app.include_router(grading_router)
     app.include_router(health_router)
     app.include_router(rubric_router)

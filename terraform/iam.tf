@@ -33,6 +33,8 @@ resource "aws_iam_role_policy" "ec2_dynamodb" {
     findings          = aws_dynamodb_table.snowball_findings.arn
     section_grades    = aws_dynamodb_table.snowball_section_grades.arn
     rubric_directions = aws_dynamodb_table.snowball_rubric_directions.arn
+    companies         = aws_dynamodb_table.snowball_companies.arn
+    review_sessions   = aws_dynamodb_table.snowball_review_sessions.arn
   }
 
   name = "snowball-ec2-dynamodb-${replace(each.key, "_", "-")}"

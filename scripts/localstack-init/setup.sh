@@ -26,3 +26,21 @@ awslocal dynamodb create-table \
   --attribute-definitions AttributeName=rubric_category,AttributeType=S AttributeName=sk,AttributeType=S \
   --key-schema AttributeName=rubric_category,KeyType=HASH AttributeName=sk,KeyType=RANGE \
   --billing-mode PAY_PER_REQUEST
+
+awslocal dynamodb create-table \
+  --table-name snowball_companies \
+  --attribute-definitions AttributeName=tckr,AttributeType=S \
+  --key-schema AttributeName=tckr,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST
+
+awslocal dynamodb create-table \
+  --table-name snowball_review_sessions \
+  --attribute-definitions AttributeName=session_id,AttributeType=S \
+  --key-schema AttributeName=session_id,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST
+
+# LocalStack does not reliably enforce TTL expiry, but enabling it keeps
+# behavior consistent with real AWS and is harmless either way.
+awslocal dynamodb update-time-to-live \
+  --table-name snowball_review_sessions \
+  --time-to-live-specification "Enabled=true,AttributeName=expires_at"

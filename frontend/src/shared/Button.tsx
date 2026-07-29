@@ -3,6 +3,7 @@ interface ButtonProps {
   variant?: 'primary' | 'ghost'
   type?: 'button' | 'submit'
   onClick?: () => void
+  disabled?: boolean
 }
 
 const styles = {
@@ -12,12 +13,13 @@ const styles = {
     'border border-secondary text-secondary-deep hover:bg-secondary-ice',
 }
 
-function Button({ children, variant = 'primary', type = 'button', onClick }: ButtonProps) {
+function Button({ children, variant = 'primary', type = 'button', onClick, disabled }: ButtonProps) {
   return (
     <button
       type={type}
       onClick={onClick}
-      className={`cursor-pointer rounded-lg px-5 py-2.5 font-semibold transition-colors ${styles[variant]}`}
+      disabled={disabled}
+      className={`cursor-pointer rounded-lg px-5 py-2.5 font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${styles[variant]}`}
     >
       {children}
     </button>

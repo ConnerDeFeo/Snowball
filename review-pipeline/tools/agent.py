@@ -11,9 +11,13 @@ from tools.fetch_findings_rationale import fetch_findings_rationale
 # ... table, ticker, start_year, end_year as before
 async def run_agent(
     tckr:str, start_year:int, end_year:int, manifest_text:str, findings_manifest_text:str, user_text:str,
+    # Prior turns for this session, as plain {"role","content"} dicts. The
+    # grade/findings manifests are re-injected into the system prompt every
+    # request, so only user/assistant turns are kept — no serialized tool calls.
+    history: Optional[list[dict]] = None,
     # Callable function that takes dict param and returns awaitable nothing
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
-) -> str:
+) -> tuple[str, list[dict]]:
 
     # Agent reads the docstring
     @tool
@@ -51,10 +55,12 @@ async def run_agent(
     if on_progress:
         await on_progress({"type": "start"})
 
+    messages = (history or []) + [{"role": "user", "content": user_text}]
+
     # Stream node-by-node updates so we can report each tool call as it happens,
     # and keep the latest assistant text as the running answer.
     final_text = ""
-    async for chunk in agent.astream({"messages": [{"role": "user", "content": user_text}]}, stream_mode="updates"):
+    async for chunk in agent.astream({"messages": messages}, stream_mode="updates"):
         for update in chunk.values():
             for msg in update.get("messages", []):
                 tool_calls = getattr(msg, "tool_calls", None) or []
@@ -65,4 +71,5 @@ async def run_agent(
                     content = msg.content
                     final_text = content if isinstance(content, str) else str(content)
 
-    return final_text
+    updated_history = messages + [{"role": "assistant", "content": final_text}]
+    return final_text, updated_history
