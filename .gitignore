@@ -67,7 +67,6 @@ coverage/
 credentials.json
 
 # ===== Editor / OS =====
-.vscode/
 .idea/
 .DS_Store
 Thumbs.db
