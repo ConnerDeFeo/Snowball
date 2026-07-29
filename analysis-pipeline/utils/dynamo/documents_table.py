@@ -1,7 +1,8 @@
-import boto3
+from utils.aws_clients import dynamo_client
 
 TABLE_NAME = "snowball_documents"
-table = boto3.resource('dynamodb').Table(TABLE_NAME)
+client = dynamo_client()
+table = client.Table(TABLE_NAME)
 
 def put(accession: str, **fields):
     table.put_item(Item={"accession": accession, **fields})

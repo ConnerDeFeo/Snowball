@@ -1,10 +1,9 @@
 import logging
 import time
-
-import boto3
+from utils.aws_clients import bedrock_client
 
 MODEL_ID = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
-client = boto3.client("bedrock-runtime")
+client = bedrock_client()
 logger = logging.getLogger(__name__)
 
 # Shared converse call + logging, driven off already-built content blocks so

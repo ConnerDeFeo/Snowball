@@ -1,8 +1,9 @@
-import boto3
 from boto3.dynamodb.conditions import Attr, Key
+from utils.aws_clients import dynamo_client
 
 TABLE_NAME = "snowball_rubric_directions"
-table = boto3.resource('dynamodb').Table(TABLE_NAME)
+client = dynamo_client()
+table = client.Table(TABLE_NAME)
 
 # Fetches every item (META + all location entries) for a rubric category in
 # one round trip, since a grading run always needs the whole partition.

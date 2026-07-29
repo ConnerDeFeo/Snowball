@@ -1,7 +1,7 @@
-import boto3
+from utils.aws_clients import s3_client
 
 BUCKET_NAME = "snowball-documents-bucket"
-client = boto3.client('s3')
+client = s3_client()
 
 def store(key: str, body: bytes):
     client.put_object(Bucket=BUCKET_NAME, Key=key, Body=body)
