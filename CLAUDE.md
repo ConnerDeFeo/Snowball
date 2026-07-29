@@ -28,6 +28,40 @@ container lives in that container's folder, not in `api/`.
 - `utils/` — shared helpers (S3 caching, etc.)
 - `routes/` — HTTP route handlers
 
+### Front end rules
+
+#### Conventions
+Use tailwind for as much styling as possible, only using CSS for global styles or complex ones.
+
+#### Folder structure
+
+All frontend code lives in `src/` with the following structure:
+
+- `pages/` — the main file for each page. A page file composes features and shared components; it should not contain complex logic itself.
+- `shared/` — anything shared across pages or features (buttons, inputs, modals, layout components, utility functions, etc.).
+- `features/<feature-name>/` — modular, self-contained features scoped to where they're used. Example: the dashboard page has a spreadsheet feature → `features/dashboard/`.
+- `features/<feature-name>/subfeatures/<sub-feature-name>/` — when a feature is too large, break it down further. Example: the spreadsheet in dashboard has many parts → `features/dashboard/subfeatures/spreadsheet/`.
+- `services/` — anything that calls another service (APIs, external systems).
+- `services/API.ts` — the single proxy for all HTTP calls. Every service must go through it (e.g. `API.get(url)`, `API.post(url, body)`). Services must NEVER write their own fetch/axios code.
+- `hooks/` — custom React hooks.
+- `constants/` — every constant value. No magic strings/numbers scattered in components.
+- `enums/` — all enums.
+
+#### Modularity rules
+
+- Files must be small and modular: one clear responsibility per file, hard cap ~150 lines. If a file is growing past that, split it.
+- Maximize reuse of shared components. Before creating ANY new component (a button, input, card, etc.):
+  1. Check `shared/` first.
+  2. Then check the relevant `features/<feature-name>/` folder.
+  3. Only create something new if nothing existing fits — and if it could be reused elsewhere, put it in `shared/`, not the feature folder.
+- Never duplicate a component that already exists. Extending an existing shared component is always preferred over creating a near-copy.
+
+#### Simplicity rules
+
+- Keep code very simple. No speculative abstractions or code written for problems we don't have yet.
+- No over-engineering: if a plain component or function solves it, don't add layers, generics, or config options "just in case."
+
+
 ## Infrastructure
 - **Region:** AWS us-east-2
 - **S3** — document / blob storage
