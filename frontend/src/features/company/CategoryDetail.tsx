@@ -36,12 +36,13 @@ function CategoryDetail({ category, graded, onGradeThis, disabled }: CategoryDet
       ) : (
         <p className="mt-3 text-sm text-slate-500">This category hasn't been graded yet.</p>
       )}
-
-      <div className="mt-4">
-        <Button variant="ghost" onClick={onGradeThis} disabled={disabled}>
-          Grade this category
-        </Button>
-      </div>
+      {!graded && 
+        <div className="mt-4">
+          <Button variant="ghost" onClick={onGradeThis} disabled={disabled}>
+            Grade this category
+          </Button>
+        </div>
+      }
     </Card>
   )
 }
