@@ -22,7 +22,7 @@ function CompanyDashboard() {
   const [selected, setSelected] = useState<RubricCategory | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
 
-  const { serverGrades, serverAvailable, error: gradesError, loading: gradesLoading, refresh: refreshGrades } = useGrades(tckr, range)
+  const { serverGrades, error: gradesError, loading: gradesLoading, refresh: refreshGrades } = useGrades(tckr, range)
 
   const { state, start, cancel } = useGradeRun({
     tckr,
@@ -58,12 +58,6 @@ function CompanyDashboard() {
       />
 
       <GradeRunBanner state={state} onCancel={cancel} />
-
-      {!serverAvailable && sessionGrades.length === 0 && (
-        <p className="text-xs text-slate-400">
-          Showing this session only — the grades API route isn't live yet, so results vanish on refresh.
-        </p>
-      )}
 
       {gradesLoading && !hasAnyGrades ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
