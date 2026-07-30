@@ -1,15 +1,17 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Home from './pages/Home'
-import Company from './pages/Company'
-import Rubric from './pages/Rubric'
-import CategoryEditor from './features/rubric/CategoryEditor'
-import EmptyState from './shared/EmptyState'
-import ToastProvider from './shared/toast/ToastProvider'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Home from './pages/Home';
+import Company from './pages/Company';
+import Rubric from './pages/Rubric';
+import CategoryEditor from './features/rubric/CategoryEditor';
+import EmptyState from './shared/EmptyState';
+import ToastProvider from './shared/toast/ToastProvider';
+import Header from './shared/Header';
 
 function App() {
   return (
     <ToastProvider>
       <BrowserRouter>
+      <Header />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/company/:tckr" element={<Company />} />
