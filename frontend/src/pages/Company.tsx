@@ -32,6 +32,7 @@ function Company() {
 
   useEffect(() => {
     if (tckr) recordRecent(tckr, range.start, range.end)
+    setSessionGrades([])
   }, [tckr, range.start, range.end])
 
   const grades = mergeGrades(serverGrades, sessionGrades)
@@ -69,11 +70,6 @@ function Company() {
               Retry
             </button>
           }
-        />
-      ) : !hasAnyGrades && !active ? (
-        <EmptyState
-          title={`No grades yet for ${tckr}`}
-          description="Grade all to get started."
         />
       ) : (
         <GradesGrid grades={grades} selected={selected} onSelect={setSelected} />
