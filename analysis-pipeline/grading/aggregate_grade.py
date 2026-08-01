@@ -1,10 +1,18 @@
 import json
 
+from pydantic import BaseModel
+
 from enums.RubricCategory import RubricCategory
 from grading.rubric_directions import BASE_INSTRUCTIONS
 from grading import grade_store
+from grading.parse_response import invoke_parsed
 from grading.types.GradedTimePeriod import GradedTimePeriod
 from utils import bedrock
+
+class AggregateResponse(BaseModel):
+    grade: float
+    reasoning: str
+    quotes: list[str]
 
 # Fallback result used whenever there's nothing to grade (no rubric yet, or no
 # cached filings) so a caller never has to raise or return None.
@@ -38,16 +46,16 @@ def aggregate_grade(
       {json.dumps(labeled, indent=2)}
     """
 
-    response = bedrock.invoke(BASE_INSTRUCTIONS, user_prompt)
-    parsed = json.loads(response)
+    label = f"tckr={tckr} category={rubric_category.value}"
+    parsed = invoke_parsed(lambda: bedrock.invoke(BASE_INSTRUCTIONS, user_prompt), AggregateResponse, label=label)
 
     graded = GradedTimePeriod(
         category=rubric_category,
         start=start_year,
         end=end_year,
-        grade=float(parsed["grade"]),
-        reasoning=parsed["reasoning"],
-        quotes=parsed["quotes"],
+        grade=parsed.grade,
+        reasoning=parsed.reasoning,
+        quotes=parsed.quotes,
     )
 
     grade_store.store(tckr, graded, cfg["version"])

@@ -19,6 +19,9 @@ BASE_INSTRUCTIONS = """
     and 100 is the strongest, based solely on the evidence in the excerpts.
   - "reasoning": a concise explanation of the grade, citing specific evidence.
   - "quotes": short verbatim quotes from the excerpts that support the grade.
+
+  The response must be valid JSON: escape any double quotes or newlines that
+  appear inside a string value (e.g. quoted terms within a filing excerpt).
 """
 
 SUB_AGENT_BASE_INSTRUCTIONS = """

@@ -143,8 +143,12 @@ async def grade_company(
         if not blocks_metas:
             return no_evidence(category, start_year, end_year, "No cached filings found for this ticker/period.")
         labeled = [label_section_meta(block, meta) for block, meta in blocks_metas]
-        async with sem:
-            return await asyncio.to_thread(aggregate_grade, tckr, category, cfg, labeled, start_year, end_year)
+        try:
+            async with sem:
+                return await asyncio.to_thread(aggregate_grade, tckr, category, cfg, labeled, start_year, end_year)
+        except Exception:
+            logger.exception("skipping category after aggregation failure: tckr=%s category=%s", tckr, category.value)
+            return no_evidence(category, start_year, end_year, "Aggregation failed after retries; see logs.")
 
     aggregated = await asyncio.gather(*[_aggregate(category, cfg) for category, cfg in to_grade.items()])
     results.extend(aggregated)
