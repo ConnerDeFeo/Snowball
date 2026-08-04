@@ -1,15 +1,10 @@
-import logging
-
 from grading.types.SectionMeta import Finding
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from enums.RubricCategory import RubricCategory
 from enums.Sections import *
 from grading.rubric_directions import SUB_AGENT_BASE_INSTRUCTIONS
+from grading.parse_response import invoke_parsed
 from utils import bedrock
-
-logger = logging.getLogger(__name__)
-
-MAX_PARSE_ATTEMPTS = 3  # 1 initial try + 2 retries on invalid JSON
 
 class FindingsResponse(BaseModel):
     findings: list[Finding]
@@ -42,20 +37,9 @@ def extract_findings(section_text: str, rubric_category: RubricCategory, section
 
     label = f"block={block_label} category={rubric_category.value}"
 
-    # Bedrock occasionally emits structurally invalid JSON (e.g. an unescaped
-    # quote inside a verbatim filing "snippet"), even with stop_reason=end_turn.
-    # Retry a few times before giving up, since re-sampling usually produces
-    # valid JSON.
-    last_error: ValidationError | None = None
-    for attempt in range(1, MAX_PARSE_ATTEMPTS + 1):
+    def _call() -> str:
         if use_cache:
-            response = bedrock.invoke_cached(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix, tail, label=label)
-        else:
-            response = bedrock.invoke(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix + tail)
-        try:
-            return FindingsResponse.model_validate_json(response)
-        except ValidationError as e:
-            last_error = e
-            logger.warning("invalid findings JSON: %s attempt=%d/%d", label, attempt, MAX_PARSE_ATTEMPTS)
+            return bedrock.invoke_cached(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix, tail, label=label)
+        return bedrock.invoke(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix + tail)
 
-    raise last_error
+    return invoke_parsed(_call, FindingsResponse, label=label)
