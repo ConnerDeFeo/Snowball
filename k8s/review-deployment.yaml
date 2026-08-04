@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: review-pipeline
+  template:
+    metadata:
+      labels:
+        app: review-pipeline
+    spec:
+      containers:
+        - name: review-pipeline
+          image: snowball-review-pipeline:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: AWS_DEFAULT_REGION
+              value: us-east-2

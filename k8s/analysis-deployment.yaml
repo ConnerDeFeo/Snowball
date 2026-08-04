@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analysis-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analysis-pipeline
+  template:
+    metadata:
+      labels:
+        app: analysis-pipeline
+    spec:
+      containers:
+        - name: analysis-pipeline
+          image: snowball-analysis-pipeline:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: AWS_DEFAULT_REGION
+              value: us-east-2

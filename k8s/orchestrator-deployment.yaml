@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orchestrator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orchestrator
+  template:
+    metadata:
+      labels:
+        app: orchestrator
+    spec:
+      containers:
+        - name: orchestrator
+          image: snowball-orchestrator:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ANALYSIS_PIPELINE_URL
+              value: http://analysis-pipeline:8000
+            - name: REVIEW_PIPELINE_URL
+              value: http://review-pipeline:8000
