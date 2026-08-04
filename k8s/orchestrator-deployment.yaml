@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: orchestrator
-          image: snowball-orchestrator:latest
+          image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:bd0f9ad
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

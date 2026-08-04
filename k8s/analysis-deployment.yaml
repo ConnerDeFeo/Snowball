@@ -12,9 +12,10 @@ spec:
       labels:
         app: analysis-pipeline
     spec:
+      serviceAccountName: analysis-pipeline
       containers:
         - name: analysis-pipeline
-          image: snowball-analysis-pipeline:latest
+          image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:358f6a7
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

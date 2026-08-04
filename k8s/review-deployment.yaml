@@ -12,9 +12,10 @@ spec:
       labels:
         app: review-pipeline
     spec:
+      serviceAccountName: review-pipeline
       containers:
         - name: review-pipeline
-          image: snowball-review-pipeline:latest
+          image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/review-pipeline:bd0f9ad
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
