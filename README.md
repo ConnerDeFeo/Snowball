@@ -4,6 +4,14 @@
 
 Point it at a ticker. It pulls the 10-Ks, 10-Qs, and proxy statements straight from SEC EDGAR, runs a rubric of LLM sub-agents over the specific filing sections that matter for each category, and returns a 0–100 grade with the reasoning and the quoted source text that produced it. When a score looks wrong, you can ask why in plain English and get an answer grounded in the filings — not a fresh guess.
 
+![Snowball company grades](docs/images/company-grades.png)
+
+<p align="center"><em>Grading a company across all 14 rubric categories.</em></p>
+
+![Grading run streaming live](docs/images/grading-run.gif)
+
+<p align="center"><em>Progress streams live from Bedrock through the Go orchestrator to the browser over SSE.</em></p>
+
 ---
 
 ## What it does
