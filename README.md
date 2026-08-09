@@ -70,7 +70,7 @@ flowchart LR
 
 **The rubric is data, not code.** All 14 categories live in DynamoDB, each with sub-agent prompts scoped to individual filing sections (`10-K#part_ii_item_7`). Editing a prompt bumps a version, and that version is part of the grade cache key — so an edit invalidates exactly the grades it should and leaves every other category's cached work intact. Changing how the system thinks requires no deploy.
 
-![Rubric editor](docs/images/rubric-editor.png)
+<!-- ![Rubric editor](docs/images/rubric-editor.png) -->
 
 **Prompt caching that accounts for its own cost.** Multiple categories read the same filing section, so each Bedrock call is split around an explicit `cachePoint`: the section excerpt forms a byte-identical cached prefix, and only the category-specific directions sit past it. The first category to touch a block writes the cache; the rest read it back. Critically, caching is disabled when only one category will read a given block — a cache write costs 1.25x normal input tokens, which is pure waste if nothing reads it. Cache hits and writes are logged per block so the behavior is observable in production, not assumed.
 
@@ -80,7 +80,9 @@ flowchart LR
 
 **Streaming end to end.** Progress events originate in the Python grading loop, cross the Go orchestrator through a dedicated SSE proxy, and drive a reducer in React. One mechanism, three languages, no polling.
 
-**Infrastructure as code.** Terraform defines the VPC, S3 bucket, four DynamoDB tables, ECR repositories, and IAM roles, with remote state in S3 and lockfile-based locking. Containers are built and pushed to ECR via scripts in `scripts/`, then run on EC2 with `docker-compose.prod.yml` pinned to commit-SHA image tags. Kubernetes manifests exist in `k8s/` and run against a local cluster — the EKS module is written but currently commented out.
+**Infrastructure as code.** Terraform defines the VPC, S3 bucket, four DynamoDB tables, ECR repositories, and IAM roles, with remote state in S3 and lockfile-based locking. Containers are built and pushed to ECR via scripts in `scripts/`, then run on EC2 with `docker-compose.prod.yml` pinned to commit-SHA image tags.
+
+**Kubernetes migration, in progress.** All three services have manifests in `k8s/` — a deployment and service per container, plus ServiceAccounts for the two Python pipelines — running against a local cluster today. The AWS side is written but not yet applied: an EKS module using Auto Mode compute on the VPC's private subnets, and pod-level AWS access granted through **EKS Pod Identity associations** rather than the older IRSA annotation pattern, so the pipelines get scoped Bedrock/S3/DynamoDB permissions without long-lived credentials. What remains is provisioning the cluster and wiring the associations to the ServiceAccounts. Production currently runs on EC2 via Docker Compose — the migration is deliberately staged rather than half-deployed.
 
 ---
 
@@ -99,6 +101,7 @@ flowchart LR
 | **Tailwind** | Styling | Consistency without a parallel CSS codebase |
 | **Docker Compose** | Local + prod | Same three containers in both environments |
 | **Terraform** | AWS infrastructure | Reproducible provisioning, remote state |
+| **Kubernetes** | Manifests written, local cluster | Migration target for the EC2 deployment |
 
 ---
 
@@ -109,15 +112,7 @@ orchestrator/        Go — HTTP routing, SSE proxying, per-service clients
 analysis-pipeline/   Python — EDGAR retrieval, rubric grading, scoring
 review-pipeline/     Python — LangChain agent for Q&A over results
 frontend/            React + TypeScript + Tailwind
-terraform/           VPC, S3, DynamoDB, ECR, IAM
-k8s/                 Deployment manifests (exploratory)
+terraform/           VPC, S3, DynamoDB, ECR, IAM (EKS module written, not applied)
+k8s/                 Deployments, services, ServiceAccounts for all three containers
 scripts/             ECR login/push, endpoint smoke tests
 ```
-
----
-
-## Status
-
-Working end to end: EDGAR retrieval and caching, all 14 categories grading with streamed progress, rubric editing with versioned cache invalidation, and grounded Q&A over completed analyses. Deployed by pushing images to ECR and running the prod compose file on EC2.
-
-In progress: Kubernetes orchestration (manifests run locally; EKS not yet provisioned).
