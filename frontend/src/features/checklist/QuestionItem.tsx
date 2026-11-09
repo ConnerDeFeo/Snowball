@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import Button from '../../shared/Button'
 import QuestionEditor from './QuestionEditor'
-import SubAgentList from './SubAgentList'
 import * as ChecklistService from '../../services/ChecklistService'
 import { ApiError } from '../../services/API'
 import { useToast } from '../../hooks/useToast'
+import { displaySection } from '../../constants/categories'
 import type { Question } from '../../services/types/ChecklistTypes'
 
 interface QuestionItemProps {
@@ -52,7 +52,10 @@ function QuestionItem({ categoryId, question, onChanged }: QuestionItemProps) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-slate-800">{question.text}</p>
-            {question.latest_only && <p className="mt-1 text-xs text-slate-400">Latest filing only</p>}
+            <p className="mt-1 text-xs text-slate-400">
+              {question.form} · {displaySection(question.section)}
+              {question.latest_only && ' · Latest filing only'}
+            </p>
           </div>
           <div className="flex shrink-0 gap-2">
             <Button variant="ghost" onClick={() => setEditing(true)}>
@@ -64,7 +67,6 @@ function QuestionItem({ categoryId, question, onChanged }: QuestionItemProps) {
           </div>
         </div>
       )}
-      <SubAgentList categoryId={categoryId} question={question} onChanged={onChanged} />
     </li>
   )
 }

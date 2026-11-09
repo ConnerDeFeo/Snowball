@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from checklist import category, load, question, sub_agent
+from checklist import category, load, question
 
 router = APIRouter()
 
@@ -18,26 +18,18 @@ class CategoryEdit(BaseModel):
 
 class QuestionCreate(BaseModel):
     text: str
+    form: str
+    section: str
     order: int = 0
     latest_only: bool = False
 
 
 class QuestionEdit(BaseModel):
     text: str | None = None
-    order: int | None = None
-    latest_only: bool | None = None
-
-
-class SubAgentCreate(BaseModel):
-    form: str
-    section: str
-    prompt: str
-
-
-class SubAgentEdit(BaseModel):
     form: str | None = None
     section: str | None = None
-    prompt: str | None = None
+    order: int | None = None
+    latest_only: bool | None = None
 
 
 @router.get("/checklist")
@@ -69,33 +61,16 @@ def delete_category(category_id: str):
 
 @router.post("/checklist/{category_id}/questions")
 def create_question(category_id: str, req: QuestionCreate):
-    return {"id": question.create(category_id, req.text, req.order, req.latest_only)}
+    return {"id": question.create(category_id, req.text, req.form, req.section, req.order, req.latest_only)}
 
 
 @router.patch("/checklist/{category_id}/questions/{qid}")
 def edit_question(category_id: str, qid: str, req: QuestionEdit):
-    question.edit(category_id, qid, req.text, req.order, req.latest_only)
-    return {"status": "updated"}
+    version = question.edit(category_id, qid, req.text, req.form, req.section, req.order, req.latest_only)
+    return {"version": version}
 
 
 @router.delete("/checklist/{category_id}/questions/{qid}")
 def delete_question(category_id: str, qid: str):
     question.delete(category_id, qid)
-    return {"status": "deleted"}
-
-
-@router.post("/checklist/{category_id}/questions/{qid}/sub_agents")
-def create_sub_agent(category_id: str, qid: str, req: SubAgentCreate):
-    return {"id": sub_agent.create(category_id, qid, req.form, req.section, req.prompt)}
-
-
-@router.patch("/checklist/{category_id}/questions/{qid}/sub_agents/{said}")
-def edit_sub_agent(category_id: str, qid: str, said: str, req: SubAgentEdit):
-    version = sub_agent.edit(category_id, qid, said, req.form, req.section, req.prompt)
-    return {"version": version}
-
-
-@router.delete("/checklist/{category_id}/questions/{qid}/sub_agents/{said}")
-def delete_sub_agent(category_id: str, qid: str, said: str):
-    sub_agent.delete(category_id, qid, said)
     return {"status": "deleted"}

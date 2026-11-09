@@ -23,7 +23,7 @@ def edit(category_id: str, name: str | None, order: int | None) -> None:
         raise
 
 
-# Clears the whole partition (META + every question and sub-agent).
+# Clears the whole partition (META + every question).
 def delete(category_id: str) -> None:
     for item in checklist_table.query_category(category_id):
         checklist_table.delete(category_id, item["sk"])

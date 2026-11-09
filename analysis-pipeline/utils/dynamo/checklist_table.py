@@ -5,7 +5,7 @@ TABLE_NAME = "snowball_checklist"
 client = dynamo_client()
 table = client.Table(TABLE_NAME)
 
-# Every item (META + questions + sub-agents) in a category's partition, in one
+# Every item (META + questions) in a category's partition, in one
 # round trip, since a run or a GET always needs the whole partition.
 def query_category(category_id: str) -> list[dict]:
     response = table.query(KeyConditionExpression=Key("category_id").eq(category_id))

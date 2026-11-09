@@ -14,18 +14,13 @@ export interface EvidenceItem {
   findings: Finding[]
 }
 
-export interface EvidenceSubAgent {
-  id: string
-  form: string
-  section: string
-  evidence: EvidenceItem[]
-}
-
 export interface EvidenceQuestion {
   id: string
   text: string
+  form: string
+  section: string
   latest_only: boolean
-  sub_agents: EvidenceSubAgent[]
+  evidence: EvidenceItem[]
 }
 
 export interface EvidenceCategory {
@@ -56,7 +51,6 @@ export type EvidenceRunFrame =
       section: string
       quarter: string | null
       question_id: string
-      sub_agent_id: string
     }
   | { type: 'result'; categories: EvidenceCategory[] }
   | ErrorFrame

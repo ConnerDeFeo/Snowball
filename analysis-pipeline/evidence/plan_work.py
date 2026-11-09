@@ -5,15 +5,15 @@ from enums.Sections import Section, section_from_form
 def sort_key(year: str | int, quarter: str | None) -> tuple:
     return (int(year), quarter or "")
 
-# Every distinct section the selected sub-agents point at, so a run fetches each
-# one from S3 once instead of once per sub-agent.
+# Every distinct section the selected questions point at, so a run fetches each
+# one from S3 once instead of once per question.
 def locations(categories: list[dict]) -> list[Section]:
     return list({
-        section_from_form(sa["form"], sa["section"])
-        for c in categories for q in c["questions"] for sa in q["sub_agents"]
+        section_from_form(q["form"], q["section"])
+        for c in categories for q in c["questions"]
     })
 
-# Pairs each sub-agent with the fetched blocks it targets (same form + section).
+# Pairs each question with the fetched blocks it targets (same form + section).
 # A `latest_only` question only gets the most recent matching filing.
 def plan(categories: list[dict], blocks: list[dict]) -> list[dict]:
     by_target: dict[tuple, list[dict]] = {}
@@ -23,9 +23,8 @@ def plan(categories: list[dict], blocks: list[dict]) -> list[dict]:
     work = []
     for c in categories:
         for q in c["questions"]:
-            for sa in q["sub_agents"]:
-                matches = by_target.get((sa["form"], sa["section"]), [])
-                if q["latest_only"] and matches:
-                    matches = [max(matches, key=lambda b: sort_key(b["year"], b.get("quarter")))]
-                work += [{"question": q, "sub_agent": sa, "block": b} for b in matches]
+            matches = by_target.get((q["form"], q["section"]), [])
+            if q["latest_only"] and matches:
+                matches = [max(matches, key=lambda b: sort_key(b["year"], b.get("quarter")))]
+            work += [{"question": q, "block": b} for b in matches]
     return work

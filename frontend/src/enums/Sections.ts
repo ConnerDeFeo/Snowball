@@ -1,4 +1,4 @@
-import type { SubAgentForm } from './FormType'
+import type { SectionForm } from './FormType'
 
 export const TEN_K_SECTIONS = [
   'part_i_item_1',
@@ -42,6 +42,6 @@ export type TenKSection = (typeof TEN_K_SECTIONS)[number]
 export type TenQSection = (typeof TEN_Q_SECTIONS)[number]
 export type Section = TenKSection | TenQSection
 
-export function sectionsForForm(form: SubAgentForm): readonly Section[] {
+export function sectionsForForm(form: SectionForm): readonly Section[] {
   return form === '10-K' ? TEN_K_SECTIONS : TEN_Q_SECTIONS
 }

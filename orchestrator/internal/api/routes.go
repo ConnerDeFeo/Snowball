@@ -27,9 +27,6 @@ func NewRouter(apc *analysispipeline.Client, rpc *reviewpipeline.Client) *http.S
 	mux.HandleFunc("POST /checklist/{category_id}/questions", apc.HandleChecklist)
 	mux.HandleFunc("PATCH /checklist/{category_id}/questions/{qid}", apc.HandleChecklist)
 	mux.HandleFunc("DELETE /checklist/{category_id}/questions/{qid}", apc.HandleChecklist)
-	mux.HandleFunc("POST /checklist/{category_id}/questions/{qid}/sub_agents", apc.HandleChecklist)
-	mux.HandleFunc("PATCH /checklist/{category_id}/questions/{qid}/sub_agents/{said}", apc.HandleChecklist)
-	mux.HandleFunc("DELETE /checklist/{category_id}/questions/{qid}/sub_agents/{said}", apc.HandleChecklist)
 
 	// Evidence: run (SSE) and read (plain JSON)
 	mux.HandleFunc("GET /evidence/run/{tckr}", apc.HandleEvidenceRun)

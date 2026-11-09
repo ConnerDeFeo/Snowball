@@ -18,9 +18,9 @@ def _block_id(block: dict) -> tuple:
 
 # Runs the selected part of the checklist (everything, one category, or one
 # question) for one ticker/period. Fetches each unique filing section once, and
-# runs the sub-agents that share a section back-to-back so Bedrock prompt
+# runs the questions that share a section back-to-back so Bedrock prompt
 # caching (see extract.extract_evidence) only pays to process that section's
-# text once per block instead of once per sub-agent.
+# text once per block instead of once per question.
 async def run_checklist(
     tckr: str,
     start_year: int,
@@ -35,7 +35,7 @@ async def run_checklist(
 
     # Evidence cached under the current prompt + model versions needs no Bedrock call.
     cached = await asyncio.gather(*[
-        asyncio.to_thread(evidence_cache.get_cached, tckr, w["question"], w["sub_agent"], w["block"])
+        asyncio.to_thread(evidence_cache.get_cached, tckr, w["question"], w["block"])
         for w in work
     ])
     done: list[tuple[dict, object]] = []
@@ -53,9 +53,9 @@ async def run_checklist(
     sem = asyncio.Semaphore(MAX_WORKERS)
     completed = 0
 
-    # A single sub-agent/block can fail (e.g. Bedrock returning unparseable
+    # A single question/block can fail (e.g. Bedrock returning unparseable
     # JSON after retries) without aborting the rest of the run — it's skipped,
-    # so that sub-agent ends up with less evidence instead of no results at all.
+    # so that question ends up with less evidence instead of no results at all.
     async def _run(item: dict, use_cache: bool) -> None:
         nonlocal completed
         block = item["block"]
@@ -64,8 +64,8 @@ async def run_checklist(
                 evidence = await asyncio.to_thread(extract_and_store, tckr, item, use_cache)
         except Exception:
             logger.exception(
-                "skipping sub-agent after extraction failure: tckr=%s form=%s year=%s section=%s question=%s sub_agent=%s",
-                tckr, block["form"], block["year"], block["section"], item["question"]["id"], item["sub_agent"]["id"],
+                "skipping question after extraction failure: tckr=%s form=%s year=%s section=%s question=%s",
+                tckr, block["form"], block["year"], block["section"], item["question"]["id"],
             )
         else:
             done.append((item, evidence))
@@ -75,13 +75,13 @@ async def run_checklist(
                 "type": "progress", "completed": completed, "total": total,
                 "form": block["form"], "year": block["year"], "section": block["section"],
                 "quarter": block.get("quarter"),
-                "question_id": item["question"]["id"], "sub_agent_id": item["sub_agent"]["id"],
+                "question_id": item["question"]["id"],
             })
 
-    # use_cache is only True when a second sub-agent will actually read the
-    # cachePoint back — a lone sub-agent paying the 1.25x cache-write premium
+    # use_cache is only True when a second question will actually read the
+    # cachePoint back — a lone question paying the 1.25x cache-write premium
     # for a block nothing else reads is pure waste. Within a block, the first
-    # sub-agent runs alone to write the cachePoint before the rest read off it.
+    # question runs alone to write the cachePoint before the rest read off it.
     async def _run_block(items: list[dict]) -> None:
         use_cache = len(items) > 1
         await _run(items[0], use_cache)
@@ -95,7 +95,7 @@ async def run_checklist(
         await asyncio.to_thread(companies_table.upsert, tckr, start_year, end_year, now)
 
     entries = [
-        assemble.entry(i["sub_agent"]["id"], i["block"]["form"], i["block"]["year"],
+        assemble.entry(i["question"]["id"], i["block"]["form"], i["block"]["year"],
                        i["block"].get("quarter"), i["block"]["section"], ev)
         for i, ev in done
     ]

@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import Select from '../../../../shared/Select'
 import Button from '../../../../shared/Button'
-import { SUB_AGENT_FORMS } from '../../../../enums/FormType'
+import { SECTION_FORMS } from '../../../../enums/FormType'
 import { sectionsForForm } from '../../../../enums/Sections'
 import { QUARTERS } from '../../../../constants/quarters'
 import { displaySection } from '../../../../constants/categories'
 import type { YearRange } from '../../../../constants/yearRange'
-import type { SubAgentForm } from '../../../../enums/FormType'
+import type { SectionForm } from '../../../../enums/FormType'
 import type { Mention } from '../../../../services/types/ReviewTypes'
 
 interface MentionPickerProps {
@@ -16,15 +16,15 @@ interface MentionPickerProps {
 }
 
 function MentionPicker({ range, onAdd, onClose }: MentionPickerProps) {
-  const [form, setForm] = useState<SubAgentForm>(SUB_AGENT_FORMS[0])
+  const [form, setForm] = useState<SectionForm>(SECTION_FORMS[0])
   const [year, setYear] = useState(String(range.end))
   const [quarter, setQuarter] = useState<string>(QUARTERS[0])
-  const [section, setSection] = useState<string>(sectionsForForm(SUB_AGENT_FORMS[0])[0])
+  const [section, setSection] = useState<string>(sectionsForForm(SECTION_FORMS[0])[0])
 
   const years = Array.from({ length: range.end - range.start + 1 }, (_, i) => String(range.end - i))
 
   function handleFormChange(next: string) {
-    const typed = next as SubAgentForm
+    const typed = next as SectionForm
     setForm(typed)
     setSection(sectionsForForm(typed)[0])
   }
@@ -37,7 +37,7 @@ function MentionPicker({ range, onAdd, onClose }: MentionPickerProps) {
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-secondary-ice bg-secondary-ice/30 p-3">
       <div className="flex gap-2">
-        <Select value={form} onChange={handleFormChange} options={SUB_AGENT_FORMS.map((f) => ({ value: f, label: f }))} />
+        <Select value={form} onChange={handleFormChange} options={SECTION_FORMS.map((f) => ({ value: f, label: f }))} />
         <Select value={year} onChange={setYear} options={years.map((y) => ({ value: y, label: y }))} />
         {form === '10-Q' && (
           <Select value={quarter} onChange={setQuarter} options={QUARTERS.map((q) => ({ value: q, label: q }))} />

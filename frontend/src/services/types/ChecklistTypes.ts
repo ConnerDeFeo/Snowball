@@ -1,21 +1,14 @@
-import type { SubAgentForm } from '../../enums/FormType'
+import type { SectionForm } from '../../enums/FormType'
 import type { Section } from '../../enums/Sections'
-
-export interface SubAgent {
-  id: string
-  form: SubAgentForm
-  section: Section
-  prompt: string
-  version: string
-}
 
 export interface Question {
   id: string
   text: string
+  form: SectionForm
+  section: Section
   order: number
   latest_only: boolean
   version: string
-  sub_agents: SubAgent[]
 }
 
 export interface Category {
@@ -32,14 +25,10 @@ export interface CategoryBody {
 
 export interface QuestionBody {
   text: string
-  order: number
-  latest_only: boolean
-}
-
-export interface SubAgentBody {
   form: string
   section: string
-  prompt: string
+  order: number
+  latest_only: boolean
 }
 
 export interface IdResponse {

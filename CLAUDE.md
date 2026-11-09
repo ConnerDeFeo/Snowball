@@ -3,7 +3,7 @@
 ## What this is
 Company-analysis system. It fetches public company documents (SEC filings) and
 answers an editable checklist of questions about them. The checklist is
-categories → questions → sub-agents; each sub-agent reads one 10-K/10-Q section
+categories → questions; each question is answered by one agent that reads one 10-K/10-Q section
 and returns raw evidence (findings with verbatim snippets). There is no grading,
 scoring or summarizing step — the evidence is the result. A separate agent
 answers ad-hoc questions about the filings. Three containers sit behind a Go
@@ -36,17 +36,17 @@ container lives in that container's folder, not in `api/`.
 
 ### Analysis pipeline layout
 - `document_retrieval/` — fetches public company documents; calls `utils/` to cache them to S3
-- `checklist/` — CRUD for categories, questions and sub-agents (config lives in DynamoDB, editable without a redeploy)
-- `evidence/` — runs the checklist: fetches sections, calls Bedrock per sub-agent, caches and reads back evidence
+- `checklist/` — CRUD for categories, questions (config lives in DynamoDB, editable without a redeploy)
+- `evidence/` — runs the checklist: fetches sections, calls Bedrock per question, caches and reads back evidence
 - `utils/` — shared helpers (S3, Dynamo wrappers, Bedrock, SSE)
 - `routes/` — HTTP route handlers (`/checklist...`, `/evidence...`, `/documents`, `/companies`)
 
-How a run works: a sub-agent targets one `form#section`. For each filing in the
-year window that has that section, it gets the section text plus its question and
-prompt, and returns findings. A question's `latest_only` flag restricts it to the
-most recent filing. Evidence is cached in DynamoDB keyed by question, sub-agent
-and their versions, so editing a prompt invalidates only that sub-agent's evidence.
-Sub-agents that read the same section share a Bedrock prompt cache.
+How a run works: a question targets one `form#section`. For each filing in the
+year window that has that section, its agent gets the section text plus the question text
+(the prompt), and returns findings. A question's `latest_only` flag restricts it to the
+most recent filing. Evidence is cached in DynamoDB keyed by question and its
+version, so editing a question invalidates only that question's evidence.
+Questions that read the same section share a Bedrock prompt cache.
 
 ### Front end rules
 

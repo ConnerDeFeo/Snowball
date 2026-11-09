@@ -6,8 +6,8 @@ import (
 	"orchestrator/internal/proxy"
 )
 
-// HandleChecklist forwards checklist CRUD requests (categories, questions,
-// sub-agents) to the analysis pipeline. One handler serves every route since
+// HandleChecklist forwards checklist CRUD requests (categories, questions)
+// to the analysis pipeline. One handler serves every route since
 // they all forward the same way: same path, same method, same body.
 func (c *Client) HandleChecklist(w http.ResponseWriter, r *http.Request) {
 	url := c.baseURL + r.URL.Path

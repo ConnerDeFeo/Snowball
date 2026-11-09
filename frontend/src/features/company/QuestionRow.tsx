@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import Button from '../../shared/Button'
-import SubAgentEvidence from './SubAgentEvidence'
+import EvidenceItemView from './EvidenceItemView'
 import { filingCount } from './evidenceStats'
+import { displaySection } from '../../constants/categories'
+import type { Section } from '../../enums/Sections'
 import type { EvidenceQuestion } from '../../services/types/EvidenceTypes'
 
 interface QuestionRowProps {
@@ -23,6 +25,7 @@ function QuestionRow({ question, disabled, onRun }: QuestionRowProps) {
             <span className="text-sm font-medium text-slate-800">{question.text}</span>
             <span className="ml-2 text-xs text-slate-400">
               {filings === 0 ? 'no evidence yet' : `${filings} filing${filings === 1 ? '' : 's'}`}
+              {` · ${question.form} · ${displaySection(question.section as Section)}`}
               {question.latest_only && ' · latest filing only'}
             </span>
           </span>
@@ -33,13 +36,14 @@ function QuestionRow({ question, disabled, onRun }: QuestionRowProps) {
       </div>
 
       {open && (
-        <div className="flex flex-col gap-4 border-t border-secondary-ice p-3">
-          {question.sub_agents.length === 0 && (
-            <p className="text-sm text-slate-500">This question has no sub-agents yet.</p>
+        <div className="flex flex-col gap-3 border-t border-secondary-ice p-3">
+          {question.evidence.length === 0 ? (
+            <p className="text-sm text-slate-500">Not run yet.</p>
+          ) : (
+            question.evidence.map((item) => (
+              <EvidenceItemView key={`${item.year}-${item.quarter}`} item={item} />
+            ))
           )}
-          {question.sub_agents.map((subAgent) => (
-            <SubAgentEvidence key={subAgent.id} subAgent={subAgent} />
-          ))}
         </div>
       )}
     </li>

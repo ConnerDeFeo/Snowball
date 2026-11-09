@@ -30,7 +30,7 @@ async def run_agent(
 
     @tool
     def get_evidence(question_id: str) -> str:
-        """Get the evidence the checklist sub-agents extracted from the filings for one
+        """Get the evidence the checklist agent extracted from the filings for one
         checklist question. Use the question id exactly as it appears in the checklist
         manifest (the id in square brackets)."""
         try:
