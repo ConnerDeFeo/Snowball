@@ -12,7 +12,7 @@ export interface EvidenceItem {
   quarter: string | null
   section: string
   findings: Finding[]
-  notable_anomalies: string
+  summary: string
 }
 
 export interface EvidenceSubAgent {

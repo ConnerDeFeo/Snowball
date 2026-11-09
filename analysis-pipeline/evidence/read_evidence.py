@@ -26,7 +26,7 @@ def read_evidence(tckr: str, start_year: int, end_year: int, category_id: str | 
             # key: qid#said#year#form#quarter#version#model
             _, said, _, _, _, version, model = item["evidence_key"].split("#")
             sa = agents.get(said)
-            if sa is None or model != bedrock.MODEL_ID or version != evidence_cache.version_tag(q, sa):
+            if sa is None or model != bedrock.MODEL_ID or version != evidence_cache.version_tag(sa):
                 continue
             if start_year <= int(item["year"]) <= end_year:
                 current.setdefault(said, []).append(item)

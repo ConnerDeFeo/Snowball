@@ -2,7 +2,6 @@ from botocore.exceptions import ClientError
 from fastapi import HTTPException
 
 from checklist.keys import META_SK, new_id, question_sk
-from checklist.version import bump
 from utils.dynamo import checklist_table
 
 
@@ -19,12 +18,7 @@ def edit(category_id: str, qid: str, text: str | None, order: int | None, latest
     item = checklist_table.get(category_id, question_sk(qid))
     if item is None:
         raise HTTPException(status_code=404, detail=f"question {qid} not found")
-    fields = {k: v for k, v in {"order": order, "latest_only": latest_only}.items() if v is not None}
-    # Only the text feeds the sub-agent prompt, so only a text change
-    # invalidates cached evidence. order/latest_only never touch the cache key.
-    if text is not None and text != item["text"]:
-        fields["text"] = text
-        fields["version"] = bump(item["version"])
+    fields = {k: v for k, v in {"text": text, "order": order, "latest_only": latest_only}.items() if v is not None}
     if not fields:
         return
     try:

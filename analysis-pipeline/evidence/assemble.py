@@ -6,7 +6,7 @@ def entry(said: str, form: str, year: str, quarter: str | None, section: str, ev
     return {
         "said": said, "form": form, "year": year, "quarter": quarter, "section": section,
         "findings": [f.model_dump() for f in evidence.findings],
-        "notable_anomalies": evidence.notable_anomalies,
+        "summary": evidence.summary,
     }
 
 # Nests flat entries under the checklist: category -> question -> sub-agent -> evidence.

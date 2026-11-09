@@ -5,10 +5,10 @@ from evidence.types import EvidenceResponse
 from utils import bedrock
 from utils.dynamo import evidence_table
 
-# Combines the base-instructions version with the question's and sub-agent's own
-# versions, so bumping any of them invalidates evidence produced by the old prompt.
-def version_tag(question: dict, sub_agent: dict) -> str:
-    return f"{BASE_VERSION}-{question['version']}-{sub_agent['version']}"
+# Combines the base-instructions version with the sub-agent's own version, so
+# bumping either invalidates evidence produced by the old prompt.
+def version_tag(sub_agent: dict) -> str:
+    return f"{BASE_VERSION}-{sub_agent['version']}"
 
 # Leading "{qid}#" / "{qid}#{said}#" lets reads query by prefix per question
 # or per sub-agent.
@@ -23,7 +23,7 @@ def _key(question: dict, sub_agent: dict, block: dict) -> str:
     return "#".join([
         question["id"], sub_agent["id"],
         block["year"], block["form"], block.get("quarter", "FY"),
-        version_tag(question, sub_agent), bedrock.MODEL_ID,
+        version_tag(sub_agent), bedrock.MODEL_ID,
     ])
 
 # Returns None on a cache miss.

@@ -8,4 +8,4 @@ class Finding(BaseModel):
 
 class EvidenceResponse(BaseModel):
     findings: list[Finding]
-    notable_anomalies: str
+    summary: str
