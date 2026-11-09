@@ -1,43 +1,44 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import YearRangePicker from '../features/company/YearRangePicker';
-import CompanyActions from '../features/company//CompanyActions';
-import GradeRunBanner from '../features/company//GradeRunBanner';
-import GradesGrid from '../features/company//GradesGrid';
-import CategoryDetail from '../features/company//CategoryDetail';
-import { mergeGrades } from '../features/company//mergeGrades';
-import ChatPanel from '../features/company//subfeatures/chat/ChatPanel';
+import CompanyActions from '../features/company/CompanyActions';
+import RunBanner from '../features/company/RunBanner';
+import CategoryGrid from '../features/company/CategoryGrid';
+import CategoryDetail from '../features/company/CategoryDetail';
+import { mergeEvidence } from '../features/company/mergeEvidence';
+import ChatPanel from '../features/company/subfeatures/chat/ChatPanel';
 import EmptyState from '../shared/EmptyState';
 import { useYearRange } from '../hooks/useYearRange';
-import { useGradeRun } from '../hooks/useGradeRun';
-import { useGrades } from '../hooks/useGrades';
+import { useEvidenceRun } from '../hooks/useEvidenceRun';
+import { useEvidence } from '../hooks/useEvidence';
 import { recordRecent } from '../hooks/useRecents';
-import type { RubricCategory } from '../enums/RubricCategory';
-import type { GradedTimePeriod } from '../services/types/GradingTypes';
+import type { EvidenceCategory } from '../services/types/EvidenceTypes';
 
 function Company() {
   const { tckr = '' } = useParams<{ tckr: string }>()
   const { range, setRange } = useYearRange()
-  const [sessionGrades, setSessionGrades] = useState<GradedTimePeriod[]>([])
-  const [selected, setSelected] = useState<RubricCategory | null>(null)
+  const [sessionEvidence, setSessionEvidence] = useState<EvidenceCategory[]>([])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
 
-  const { serverGrades, error: gradesError, loading: gradesLoading, refresh: refreshGrades } = useGrades(tckr, range)
+  const { serverEvidence, error, loading, refresh } = useEvidence(tckr, range)
 
-  const { state, start, cancel } = useGradeRun({
-    tckr,
-    range,
-    onResult: (graded) => setSessionGrades((prev) => mergeSession(prev, graded)),
-  })
+  const onResult = useCallback(
+    (categories: EvidenceCategory[]) => setSessionEvidence((prev) => [...prev, ...categories]),
+    [],
+  )
+  const { state, start, cancel } = useEvidenceRun({ tckr, range, onResult })
 
   useEffect(() => {
     if (tckr) recordRecent(tckr, range.start, range.end)
-    setSessionGrades([])
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- drops this tab's run results when ticker/range changes
+    setSessionEvidence([])
   }, [tckr, range.start, range.end])
 
-  const grades = mergeGrades(serverGrades, sessionGrades)
-  const active = state.phase === 'fetching-docs' || state.phase === 'grading'
-  const hasAnyGrades = grades.size > 0
+  const categories = mergeEvidence(serverEvidence, sessionEvidence)
+  const selected = categories.find((c) => c.id === selectedId)
+  const active = state.phase === 'fetching-docs' || state.phase === 'running'
+  const hasAny = categories.length > 0
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10">
@@ -47,52 +48,56 @@ function Company() {
         <CompanyActions
           active={active}
           onFetchFilings={() => start({ kind: 'documents-only' })}
-          onGradeAll={() => start({ kind: 'all' })}
+          onRunChecklist={() => start({ kind: 'checklist' })}
           onAskSnowball={() => setChatOpen(true)}
         />
         <YearRangePicker range={range} onChange={setRange} />
       </div>
 
-      <GradeRunBanner state={state} onCancel={cancel} />
+      <RunBanner state={state} onCancel={cancel} />
 
-      {gradesLoading && !hasAnyGrades ? (
+      {loading && !hasAny ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="h-24 animate-pulse rounded-2xl bg-secondary-ice" />
           ))}
         </div>
-      ) : gradesError && !hasAnyGrades ? (
+      ) : error && !hasAny ? (
         <EmptyState
-          title="Couldn't load grades"
-          description={gradesError}
+          title="Couldn't load evidence"
+          description={error}
           action={
-            <button onClick={refreshGrades} className="text-sm font-semibold text-secondary-deep underline">
+            <button onClick={refresh} className="text-sm font-semibold text-secondary-deep underline">
               Retry
             </button>
           }
         />
+      ) : !hasAny ? (
+        <EmptyState
+          title="No checklist yet"
+          description="Add categories and questions to the checklist, then run it."
+          action={
+            <Link to="/checklist" className="text-sm font-semibold text-secondary-deep underline">
+              Edit checklist
+            </Link>
+          }
+        />
       ) : (
-        <GradesGrid grades={grades} selected={selected} onSelect={setSelected} />
+        <CategoryGrid categories={categories} selectedId={selectedId} onSelect={setSelectedId} />
       )}
 
       {selected && (
         <CategoryDetail
           category={selected}
-          graded={grades.get(selected)}
           disabled={active}
-          onGradeThis={() => start({ kind: 'section', category: selected })}
+          onRunCategory={() => start({ kind: 'category', categoryId: selected.id })}
+          onRunQuestion={(questionId) => start({ kind: 'question', categoryId: selected.id, questionId })}
         />
       )}
 
       <ChatPanel tckr={tckr} range={range} open={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   )
-}
-
-function mergeSession(prev: GradedTimePeriod[], next: GradedTimePeriod[]): GradedTimePeriod[] {
-  const map = new Map(prev.map((g) => [g.category, g]))
-  for (const g of next) map.set(g.category, g)
-  return Array.from(map.values())
 }
 
 export default Company;

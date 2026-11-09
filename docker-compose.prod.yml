@@ -5,6 +5,9 @@ services:
     restart: unless-stopped
     environment:
       - AWS_DEFAULT_REGION=us-east-2
+      - ANALYSIS_PIPELINE_URL=http://analysis-pipeline:8000
+    depends_on:
+      - analysis-pipeline
   analysis-pipeline:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/analysis-pipeline:358f6a7
     restart: unless-stopped

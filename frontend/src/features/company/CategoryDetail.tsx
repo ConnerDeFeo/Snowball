@@ -1,48 +1,44 @@
 import Card from '../../shared/Card'
 import Button from '../../shared/Button'
-import GradeBadge from '../../shared/GradeBadge'
-import { displayCategory } from '../../constants/categories'
-import type { RubricCategory } from '../../enums/RubricCategory'
-import type { GradedTimePeriod } from '../../services/types/GradingTypes'
+import AnsweredBadge from '../../shared/AnsweredBadge'
+import QuestionRow from './QuestionRow'
+import { countAnswered } from './evidenceStats'
+import type { EvidenceCategory } from '../../services/types/EvidenceTypes'
 
 interface CategoryDetailProps {
-  category: RubricCategory
-  graded?: GradedTimePeriod
-  onGradeThis: () => void
+  category: EvidenceCategory
   disabled: boolean
+  onRunCategory: () => void
+  onRunQuestion: (questionId: string) => void
 }
 
-function CategoryDetail({ category, graded, onGradeThis, disabled }: CategoryDetailProps) {
+function CategoryDetail({ category, disabled, onRunCategory, onRunQuestion }: CategoryDetailProps) {
   return (
     <Card>
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-slate-800">{displayCategory(category)}</h3>
-        <GradeBadge graded={graded} />
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h3 className="text-lg font-bold text-slate-800">{category.name}</h3>
+          <AnsweredBadge answered={countAnswered(category)} total={category.questions.length} />
+        </div>
+        <Button variant="ghost" onClick={onRunCategory} disabled={disabled}>
+          Run category
+        </Button>
       </div>
 
-      {graded ? (
-        <>
-          <p className="mt-3 text-sm text-slate-600">{graded.reasoning}</p>
-          {graded.quotes.length > 0 && (
-            <div className="mt-3 flex flex-col gap-2">
-              {graded.quotes.map((quote, i) => (
-                <blockquote key={i} className="border-l-2 border-secondary pl-3 text-sm italic text-slate-500">
-                  {quote}
-                </blockquote>
-              ))}
-            </div>
-          )}
-        </>
+      {category.questions.length === 0 ? (
+        <p className="mt-3 text-sm text-slate-500">This category has no questions yet.</p>
       ) : (
-        <p className="mt-3 text-sm text-slate-500">This category hasn't been graded yet.</p>
+        <ul className="mt-4 flex flex-col gap-2">
+          {category.questions.map((question) => (
+            <QuestionRow
+              key={question.id}
+              question={question}
+              disabled={disabled}
+              onRun={() => onRunQuestion(question.id)}
+            />
+          ))}
+        </ul>
       )}
-      {!graded && 
-        <div className="mt-4">
-          <Button variant="ghost" onClick={onGradeThis} disabled={disabled}>
-            Grade this category
-          </Button>
-        </div>
-      }
     </Card>
   )
 }

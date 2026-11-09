@@ -8,8 +8,8 @@ function Header() {
         <span className="text-secondary-deep">❄</span>
         Snowball
       </Link>
-      <Link to="/rubric">
-        <Button variant="ghost">Edit Rubric</Button>
+      <Link to="/checklist">
+        <Button variant="ghost">Edit Checklist</Button>
       </Link>
     </header>
   )

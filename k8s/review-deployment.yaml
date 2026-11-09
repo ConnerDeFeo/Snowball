@@ -22,3 +22,5 @@ spec:
           env:
             - name: AWS_DEFAULT_REGION
               value: us-east-2
+            - name: ANALYSIS_PIPELINE_URL
+              value: http://analysis-pipeline:8000

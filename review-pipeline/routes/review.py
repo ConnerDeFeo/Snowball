@@ -1,8 +1,11 @@
 # routes/review.py
+import asyncio
 from uuid import uuid4
 
 from fastapi import APIRouter
-from context.get_manifest import *
+from context.checklist_manifest import get_checklist_manifest
+from context.mentions import render_mentions
+from filings.manifest import filings_manifest
 from pydantic import BaseModel
 from tools.agent import run_agent
 from utils.dynamo import review_sessions_table
@@ -10,11 +13,19 @@ from utils.sse import sse_response
 
 router = APIRouter()
 
+# A filing section the user @-mentioned. quarter is None for a 10-K.
+class Mention(BaseModel):
+    form: str
+    year: str
+    quarter: str | None = None
+    section: str
+
 class ReviewRequest(BaseModel):
     start_year: int
     end_year: int
     user_text: str
     session_id: str | None = None
+    mentions: list[Mention] = []
 
 
 @router.post("/review/{tckr}")
@@ -23,14 +34,17 @@ async def review(tckr:str, req: ReviewRequest):
     start_year, end_year, user_text = req.start_year, req.end_year, req.user_text
     session_id = req.session_id or str(uuid4())
 
-    # 2. manifests for THIS company/window
-    manifest_text = get_grade_manifest(tckr, start_year, end_year)
-    findings_manifest_text = get_findings_manifest(tckr, start_year, end_year)
-    history = review_sessions_table.get_history(session_id)
+    # 2. context for THIS company/window (blocking S3/HTTP/Dynamo calls, so off the event loop)
+    mentions_text, filings_text, checklist_text, history = await asyncio.gather(
+        asyncio.to_thread(render_mentions, tckr, [m.model_dump() for m in req.mentions]),
+        asyncio.to_thread(filings_manifest, tckr, start_year, end_year),
+        asyncio.to_thread(get_checklist_manifest),
+        asyncio.to_thread(review_sessions_table.get_history, session_id),
+    )
 
     async def job(on_progress):
         answer, updated_history = await run_agent(
-            tckr, start_year, end_year, manifest_text, findings_manifest_text, user_text,
+            tckr, start_year, end_year, mentions_text, filings_text, checklist_text, user_text,
             history=history, on_progress=on_progress,
         )
         review_sessions_table.save_history(session_id, updated_history)

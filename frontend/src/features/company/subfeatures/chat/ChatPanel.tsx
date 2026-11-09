@@ -34,7 +34,7 @@ function ChatPanel({ tckr, range, open, onClose }: ChatPanelProps) {
           </Button>
         </div>
         <ChatTranscript messages={messages} pendingTools={pendingTools} busy={busy} />
-        <ChatComposer busy={busy} onSend={send} />
+        <ChatComposer busy={busy} range={range} onSend={send} />
       </div>
     </>
   )

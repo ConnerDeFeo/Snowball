@@ -1,19 +1,19 @@
 # tools/agent.py
+import json
 from typing import Awaitable, Callable, Optional
 
 from langchain_aws import ChatBedrock
 from langchain.agents import create_agent
 from langchain_core.tools import tool
-from tools.fetch_grade_rationale import fetch_grade_rationale
-from tools.fetch_findings_rationale import fetch_findings_rationale
+from filings.read_section import read_section as fetch_section
+from utils import analysis_client
 
-# ... build manifest, render to string as `manifest_text`
-# ... table, ticker, start_year, end_year as before
 async def run_agent(
-    tckr:str, start_year:int, end_year:int, manifest_text:str, findings_manifest_text:str, user_text:str,
+    tckr:str, start_year:int, end_year:int,
+    mentions_text:str, filings_manifest_text:str, checklist_manifest_text:str, user_text:str,
     # Prior turns for this session, as plain {"role","content"} dicts. The
-    # grade/findings manifests are re-injected into the system prompt every
-    # request, so only user/assistant turns are kept — no serialized tool calls.
+    # mentioned sections and manifests are re-injected into the system prompt
+    # every request, so only user/assistant turns are kept — no serialized tool calls.
     history: Optional[list[dict]] = None,
     # Callable function that takes dict param and returns awaitable nothing
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
@@ -21,34 +21,36 @@ async def run_agent(
 
     # Agent reads the docstring
     @tool
-    def get_rationale(section: str) -> str:
-        """Get the full reasoning and supporting quotes behind a section's score.
-        Use the section name exactly as it appears in the manifest. section must be in snake_case format."""
-        item = fetch_grade_rationale(tckr, start_year, end_year, section)
-        return str(item) if item else "no rationale found for that section"
+    def read_section(form: str, year: str, quarter: str, section: str) -> str:
+        """Read the full text of one cached filing section. Use form, year, quarter and
+        section exactly as they appear in the filings manifest. quarter is an empty
+        string for a 10-K (the manifest shows FY)."""
+        text = fetch_section(tckr, form, year, quarter or None, section)
+        return text if text is not None else "section not found"
 
     @tool
-    def get_finding(year: str, form: str, period: str, category: str, section: str) -> str:
-        """Get the underlying finding (reasoning and supporting quotes) for a specific
-        filing's rubric category and section. Use year, form, period, category, and
-        section exactly as they appear in the findings manifest. category and section
-        must be in snake_case format."""
-        item = fetch_findings_rationale(tckr, year, form, period, category, section)
-        return str(item) if item else "no finding found for that filing/category/section"
+    def get_evidence(question_id: str) -> str:
+        """Get the evidence the checklist sub-agents extracted from the filings for one
+        checklist question. Use the question id exactly as it appears in the checklist
+        manifest (the id in square brackets)."""
+        try:
+            return json.dumps(analysis_client.get_evidence(tckr, start_year, end_year, question_id))
+        except Exception as e:
+            return f"could not fetch evidence: {e}"
 
     llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2", max_tokens=4096)
     agent = create_agent(
         model=llm,
-        tools=[get_rationale, get_finding],
+        tools=[read_section, get_evidence],
         system_prompt=(
-            "You answer questions about a company's analysis.\n\n"
-            f"Scores for {tckr}, {start_year}-{end_year}:\n{manifest_text}\n\n"
-            f"Findings available for {tckr}, {start_year}-{end_year} (year | form | period, "
-            f"then category / section):\n{findings_manifest_text}\n\n"
-            "Call get_rationale for the reasoning behind a category score (uses section names "
-            "exactly as written in the scores manifest above).\n"
-            "Call get_finding for the underlying finding behind a specific filing's category/section "
-            "(uses year/form/period/category/section exactly as written in the findings manifest above)."
+            f"You answer questions about {tckr}'s SEC filings ({start_year}-{end_year}).\n\n"
+            f"Sections the user mentioned (full text, may be empty):\n{mentions_text or '(none)'}\n\n"
+            f"Cached filing sections (year | form | period, then section):\n{filings_manifest_text}\n\n"
+            f"Checklist questions ([id] text):\n{checklist_manifest_text}\n\n"
+            "Answer from the mentioned sections first. Call read_section to read any other "
+            "section in the filings manifest (use year/form/period/section exactly as written there). "
+            "Call get_evidence for the evidence behind a checklist question. "
+            "Cite the form, year and section you relied on."
         ),
     )
 

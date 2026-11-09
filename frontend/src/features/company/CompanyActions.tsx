@@ -4,18 +4,18 @@ import Spinner from '../../shared/Spinner'
 interface CompanyActionsProps {
   active: boolean
   onFetchFilings: () => void
-  onGradeAll: () => void
+  onRunChecklist: () => void
   onAskSnowball: () => void
 }
 
-function CompanyActions({ active, onFetchFilings, onGradeAll, onAskSnowball }: CompanyActionsProps) {
+function CompanyActions({ active, onFetchFilings, onRunChecklist, onAskSnowball }: CompanyActionsProps) {
   return (
     <div className="flex flex-wrap gap-3">
       <Button variant="ghost" onClick={onFetchFilings} disabled={active}>
         {active ? <Spinner /> : 'Fetch filings'}
       </Button>
-      <Button onClick={onGradeAll} disabled={active}>
-        {active ? <Spinner /> : 'Grade all'}
+      <Button onClick={onRunChecklist} disabled={active}>
+        {active ? <Spinner /> : 'Run checklist'}
       </Button>
       <Button variant="ghost" onClick={onAskSnowball}>
         Ask Snowball

@@ -5,8 +5,11 @@ services:
       dockerfile: dockerfile
     environment:
       - AWS_DEFAULT_REGION=us-east-2
+      - ANALYSIS_PIPELINE_URL=http://analysis-pipeline:8000
     volumes:
       - ~/.aws:/root/.aws:ro
+    depends_on:
+      - analysis-pipeline
   analysis-pipeline:
     build:
       context: ./analysis-pipeline

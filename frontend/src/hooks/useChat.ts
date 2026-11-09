@@ -3,6 +3,7 @@ import * as ReviewService from '../services/ReviewService'
 import { ApiError } from '../services/API'
 import { reviewSessionKey } from '../constants/storageKeys'
 import type { YearRange } from '../constants/yearRange'
+import type { Mention } from '../services/types/ReviewTypes'
 
 export interface ChatMessage {
   role: 'user' | 'assistant'
@@ -32,7 +33,7 @@ export function useChat({ tckr, range }: UseChatOptions) {
   }, [tckr, range.start, range.end])
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, mentions: Mention[] = []) => {
       setMessages((prev) => [...prev, { role: 'user', text }])
       setPendingTools([])
       setBusy(true)
@@ -46,6 +47,7 @@ export function useChat({ tckr, range }: UseChatOptions) {
           end_year: range.end,
           user_text: text,
           ...(sessionId && { session_id: sessionId }),
+          ...(mentions.length > 0 && { mentions }),
         }, (frame) => {
           if (frame.type === 'progress') {
             setPendingTools((prev) => [...prev, { tool: frame.tool, args: frame.args }])

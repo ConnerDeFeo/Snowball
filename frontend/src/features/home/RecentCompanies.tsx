@@ -8,7 +8,7 @@ function RecentCompanies() {
 
   return (
     <div className="w-full max-w-xl">
-      <p className="mb-2 text-sm font-medium text-slate-500">Recently graded</p>
+      <p className="mb-2 text-sm font-medium text-slate-500">Recent companies</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {recents.map((r) => (
           <Link

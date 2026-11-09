@@ -1,18 +1,29 @@
 # Snowball — CLAUDE.md
 
 ## What this is
-Quantitative company-scoring system. It fetches public company documents (SEC
-filings), analyzes and grades them across FCF-predictive categories, scores
-them, and supports Q&A over the analysis. Three containers sit behind a Go
+Company-analysis system. It fetches public company documents (SEC filings) and
+answers an editable checklist of questions about them. The checklist is
+categories → questions → sub-agents; each sub-agent reads one 10-K/10-Q section
+and returns raw evidence (findings with verbatim snippets). There is no grading,
+scoring or summarizing step — the evidence is the result. A separate agent
+answers ad-hoc questions about the filings. Three containers sit behind a Go
 orchestrator.
 
 ## Architecture
 Three containers:
 
 1. **Go orchestrator** — entrypoint and routing; connects to the other two services.
-2. **Analysis pipeline** — fetches → analyzes → grades → scores company documents.
-3. **LangChain review pipeline** — answers specific questions about the analysis.
-   <!-- TODO: describe exactly what this takes as input and returns -->
+2. **Analysis pipeline** — fetches documents, owns the checklist config, and runs
+   the checklist to produce evidence.
+3. **LangChain review pipeline** — a generic question-asker over the filings.
+   - **Input:** `POST /review/{tckr}` with `{start_year, end_year, user_text, session_id?, mentions?}`.
+     `mentions` is a list of `{form, year, quarter?, section}`; each mentioned
+     section's full text is injected into the prompt for that turn.
+   - **Returns:** an SSE stream — `progress` frames for each tool call, then a
+     `result` frame `{answer, session_id}`. Multi-turn history is kept per `session_id`.
+   - **Tools:** `read_section` reads any cached 10-K/10-Q section from S3;
+     `get_evidence` fetches stored checklist evidence for a question by calling
+     the analysis pipeline's `GET /evidence/{tckr}`.
 
 ### Go orchestrator layout
 - `cmd/orchestrator/main.go` — main entrypoint
@@ -25,8 +36,17 @@ container lives in that container's folder, not in `api/`.
 
 ### Analysis pipeline layout
 - `document_retrieval/` — fetches public company documents; calls `utils/` to cache them to S3
-- `utils/` — shared helpers (S3 caching, etc.)
-- `routes/` — HTTP route handlers
+- `checklist/` — CRUD for categories, questions and sub-agents (config lives in DynamoDB, editable without a redeploy)
+- `evidence/` — runs the checklist: fetches sections, calls Bedrock per sub-agent, caches and reads back evidence
+- `utils/` — shared helpers (S3, Dynamo wrappers, Bedrock, SSE)
+- `routes/` — HTTP route handlers (`/checklist...`, `/evidence...`, `/documents`, `/companies`)
+
+How a run works: a sub-agent targets one `form#section`. For each filing in the
+year window that has that section, it gets the section text plus its question and
+prompt, and returns findings. A question's `latest_only` flag restricts it to the
+most recent filing. Evidence is cached in DynamoDB keyed by question, sub-agent
+and their versions, so editing a prompt invalidates only that sub-agent's evidence.
+Sub-agents that read the same section share a Bedrock prompt cache.
 
 ### Front end rules
 
@@ -65,9 +85,10 @@ All frontend code lives in `src/` with the following structure:
 ## Infrastructure
 - **Region:** AWS us-east-2
 - **S3** — document / blob storage
-- **DynamoDB** — metadata and scores
+- **DynamoDB** — checklist config, evidence (cache + results), document status, company list, review sessions
 - **ECR** — container image registry (login + push scripts in `/scripts/`)
-- **Terraform** — all infra defined in `terraform/` at repo root
+- **Terraform** — all infra defined in `terraform/` at repo root. Edit the config
+  only; never run `terraform apply` or `destroy` — I apply infra changes myself.
 
 ## How to run / build / deploy
 - **Local dev stack:** `docker compose up` (from repo root)

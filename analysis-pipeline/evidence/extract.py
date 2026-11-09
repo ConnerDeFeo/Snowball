@@ -37,7 +37,7 @@ def extract_evidence(section_text: str, section: Section, question_text: str, di
 def extract_and_store(tckr: str, item: dict, use_cache: bool) -> EvidenceResponse:
     question, sub_agent, block = item["question"], item["sub_agent"], item["block"]
     section = section_from_form(block["form"], block["section"])
-    quarter = f"Q{block['quarter']}" if "quarter" in block else ""
+    quarter = f"/{block['quarter']}" if "quarter" in block else ""
     label = f"block={tckr}/{block['form']}/{block['year']}{quarter}/{block['section']} question={question['id']} sub_agent={sub_agent['id']}"
     evidence = extract_evidence(block["text"], section, question["text"], sub_agent["prompt"], label=label, use_cache=use_cache)
     evidence_cache.store(tckr, question, sub_agent, block, evidence)

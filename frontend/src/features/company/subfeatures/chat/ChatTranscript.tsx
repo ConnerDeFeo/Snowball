@@ -19,10 +19,10 @@ function ChatTranscript({ messages, pendingTools, busy }: ChatTranscriptProps) {
   if (messages.length === 0) {
     return (
       <div className="flex-1 overflow-y-auto p-4 text-sm text-slate-500">
-        <p>Ask about a category's grade, e.g.:</p>
+        <p>Ask about the filings, e.g.:</p>
         <ul className="mt-2 list-disc pl-5">
-          <li>"Why is revenue durability graded low?"</li>
-          <li>"What evidence supports the gross margin score?"</li>
+          <li>"Summarize the risk factors" (add a filing section with @)</li>
+          <li>"What evidence did we find for the customer concentration question?"</li>
         </ul>
       </div>
     )

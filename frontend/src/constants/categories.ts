@@ -1,12 +1,5 @@
-import type { RubricCategory } from '../enums/RubricCategory'
 import type { Section } from '../enums/Sections'
-
-// Mirrors the backend's `value.replace("_", " ").capitalize()` (Python
-// capitalize() only uppercases the first letter of the whole string).
-export function displayCategory(category: RubricCategory): string {
-  const spaced = category.replaceAll('_', ' ')
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
-}
+import type { Mention } from '../services/types/ReviewTypes'
 
 // "part_i_item_1a" -> "Part I, Item 1A"
 export function displaySection(section: Section): string {
@@ -14,4 +7,9 @@ export function displaySection(section: Section): string {
   if (!match) return section
   const [, part, num, letter] = match
   return `Part ${part.toUpperCase()}, Item ${num}${letter.toUpperCase()}`
+}
+
+// "10-Q 2023 Q1 · Part II, Item 1A"
+export function displayMention(m: Mention): string {
+  return `${m.form} ${m.year}${m.quarter ? ` ${m.quarter}` : ''} · ${displaySection(m.section as Section)}`
 }

@@ -33,7 +33,7 @@ function GradeCompanyForm() {
         />
         <div className="shrink-0">
           <Button type="submit" disabled={!valid}>
-            Grade Company
+            Open Company
           </Button>
         </div>
       </div>
