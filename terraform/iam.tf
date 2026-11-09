@@ -15,9 +15,8 @@
 # resource "aws_iam_policy" "dynamodb" {
 #   for_each = {
 #     documents         = aws_dynamodb_table.snowball_documents.arn
-#     findings          = aws_dynamodb_table.snowball_findings.arn
-#     section_grades    = aws_dynamodb_table.snowball_section_grades.arn
-#     rubric_directions = aws_dynamodb_table.snowball_rubric_directions.arn
+#     evidence          = aws_dynamodb_table.snowball_evidence.arn
+#     checklist         = aws_dynamodb_table.snowball_checklist.arn
 #     companies         = aws_dynamodb_table.snowball_companies.arn
 #     review_sessions   = aws_dynamodb_table.snowball_review_sessions.arn
 #   }
