@@ -12,7 +12,6 @@ export interface EvidenceItem {
   quarter: string | null
   section: string
   findings: Finding[]
-  summary: string
 }
 
 export interface EvidenceSubAgent {

@@ -13,8 +13,6 @@ function EvidenceItemView({ item }: EvidenceItemViewProps) {
         {item.quarter ? ` ${item.quarter}` : ''}
       </p>
 
-      {item.summary && <p className="mt-1 text-sm text-slate-700">{item.summary}</p>}
-
       {item.findings.length === 0 && <p className="mt-1 text-sm text-slate-500">Nothing relevant found.</p>}
 
       <ul className="mt-1 flex flex-col gap-2">

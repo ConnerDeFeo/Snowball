@@ -5,9 +5,7 @@ from evidence.types import EvidenceResponse
 def entry(said: str, form: str, year: str, quarter: str | None, section: str, evidence: EvidenceResponse) -> dict:
     return {
         "said": said, "form": form, "year": year, "quarter": quarter, "section": section,
-        "findings": [f.model_dump() for f in evidence.findings],
-        "summary": evidence.summary,
-    }
+        "findings": [f.model_dump() for f in evidence.findings],    }
 
 # Nests flat entries under the checklist: category -> question -> sub-agent -> evidence.
 # Sub-agents with no evidence still appear, with an empty list.

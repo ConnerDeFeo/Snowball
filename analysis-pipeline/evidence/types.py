@@ -8,4 +8,3 @@ class Finding(BaseModel):
 
 class EvidenceResponse(BaseModel):
     findings: list[Finding]
-    summary: str
