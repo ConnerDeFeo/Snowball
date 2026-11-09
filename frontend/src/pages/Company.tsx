@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import YearRangePicker from '../features/company/YearRangePicker';
 import CompanyActions from '../features/company/CompanyActions';
 import RunBanner from '../features/company/RunBanner';
-import CategoryGrid from '../features/company/CategoryGrid';
-import CategoryDetail from '../features/company/CategoryDetail';
+import ChecklistView from '../features/company/ChecklistView';
+import FinancialsView from '../features/financials/FinancialsView';
 import { mergeEvidence } from '../features/company/mergeEvidence';
 import ChatPanel from '../features/company/subfeatures/chat/ChatPanel';
-import EmptyState from '../shared/EmptyState';
+import Tabs from '../shared/Tabs';
+import { COMPANY_TABS } from '../constants/companyTabs';
 import { useYearRange } from '../hooks/useYearRange';
 import { useEvidenceRun } from '../hooks/useEvidenceRun';
 import { useEvidence } from '../hooks/useEvidence';
+import { useFinancials } from '../hooks/useFinancials';
 import { recordRecent } from '../hooks/useRecents';
+import type { CompanyTab } from '../constants/companyTabs';
 import type { EvidenceCategory } from '../services/types/EvidenceTypes';
 
 function Company() {
@@ -20,8 +23,10 @@ function Company() {
   const [sessionEvidence, setSessionEvidence] = useState<EvidenceCategory[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
+  const [tab, setTab] = useState<CompanyTab>('checklist')
 
   const { serverEvidence, error, loading, refresh } = useEvidence(tckr, range)
+  const financials = useFinancials(tckr, range)
 
   const onResult = useCallback(
     (categories: EvidenceCategory[]) => setSessionEvidence((prev) => [...prev, ...categories]),
@@ -35,10 +40,14 @@ function Company() {
     setSessionEvidence([])
   }, [tckr, range.start, range.end])
 
+  // A finished run may have just downloaded new filings, so reload their statements.
+  const { refresh: refreshFinancials } = financials
+  useEffect(() => {
+    if (state.phase === 'done') refreshFinancials()
+  }, [state.phase, refreshFinancials])
+
   const categories = mergeEvidence(serverEvidence, sessionEvidence)
-  const selected = categories.find((c) => c.id === selectedId)
   const active = state.phase === 'fetching-docs' || state.phase === 'running'
-  const hasAny = categories.length > 0
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10">
@@ -56,42 +65,25 @@ function Company() {
 
       <RunBanner state={state} onCancel={cancel} />
 
-      {loading && !hasAny ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="h-24 animate-pulse rounded-2xl bg-secondary-ice" />
-          ))}
-        </div>
-      ) : error && !hasAny ? (
-        <EmptyState
-          title="Couldn't load evidence"
-          description={error}
-          action={
-            <button onClick={refresh} className="text-sm font-semibold text-secondary-deep underline">
-              Retry
-            </button>
-          }
-        />
-      ) : !hasAny ? (
-        <EmptyState
-          title="No checklist yet"
-          description="Add categories and questions to the checklist, then run it."
-          action={
-            <Link to="/checklist" className="text-sm font-semibold text-secondary-deep underline">
-              Edit checklist
-            </Link>
-          }
+      <Tabs options={COMPANY_TABS} value={tab} onChange={setTab} />
+
+      {tab === 'checklist' ? (
+        <ChecklistView
+          categories={categories}
+          loading={loading}
+          error={error}
+          onRetry={refresh}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          active={active}
+          onStart={start}
         />
       ) : (
-        <CategoryGrid categories={categories} selectedId={selectedId} onSelect={setSelectedId} />
-      )}
-
-      {selected && (
-        <CategoryDetail
-          category={selected}
-          disabled={active}
-          onRunCategory={() => start({ kind: 'category', categoryId: selected.id })}
-          onRunQuestion={(questionId) => start({ kind: 'question', categoryId: selected.id, questionId })}
+        <FinancialsView
+          filings={financials.filings}
+          loading={financials.loading}
+          error={financials.error}
+          onRetry={financials.refresh}
         />
       )}
 

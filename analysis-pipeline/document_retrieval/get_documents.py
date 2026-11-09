@@ -6,6 +6,7 @@ from typing import Awaitable, Callable, Optional
 from document_retrieval.FetchDocuments import FetchDocuments
 from enums.FormType import FormType
 from document_retrieval.ProxyData import build_proxy_data
+from document_retrieval.financial_statements import build_statements
 from utils.s3 import store
 from utils.dynamo import documents_table
 
@@ -55,6 +56,7 @@ def _store_sectioned(report, base: str):
         store(f"{base}/{key}.txt", text.encode("utf-8"))
         sections[key] = text
     store(f"{base}/sections.json", json.dumps(sections).encode("utf-8"))
+    store(f"{base}/statements.json", json.dumps(build_statements(report)).encode("utf-8"))
 
 
 def _store_10k(tckr: str, report):
