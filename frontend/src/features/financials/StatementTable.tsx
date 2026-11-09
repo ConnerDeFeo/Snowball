@@ -1,4 +1,5 @@
 import { formatValue } from './formatValue'
+import { periodColumns } from './periodColumns'
 import type { Statement } from '../../services/types/FinancialsTypes'
 
 interface StatementTableProps {
@@ -7,7 +8,8 @@ interface StatementTableProps {
 
 const INDENT_REM = 1
 
-function StatementTable({ statement }: StatementTableProps) {
+function StatementTable({ statement: raw }: StatementTableProps) {
+  const statement = periodColumns(raw)
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">

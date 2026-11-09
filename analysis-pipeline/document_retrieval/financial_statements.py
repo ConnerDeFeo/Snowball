@@ -1,4 +1,5 @@
 import logging
+import re
 
 import pandas as pd
 
@@ -11,11 +12,9 @@ STATEMENTS = {
     "cashflow": "cashflow_statement",
 }
 
-# DataFrame columns that describe the row; everything else is a period column.
-META_COLUMNS = {
-    "concept", "label", "standard_concept", "unit", "level", "abstract",
-    "dimension", "is_breakdown", "point_in_time", "balance", "weight", "preferred_sign",
-}
+# Period columns are named by their end date, e.g. "2024-09-28 (FY)"; every
+# other column (concept, unit, dimension_*, ...) describes the row and is dropped.
+PERIOD_COLUMN = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
 
 def _value(v):
@@ -30,7 +29,7 @@ def _value(v):
 def _shape(df: pd.DataFrame) -> dict | None:
     if df is None or df.empty:
         return None
-    columns = [c for c in df.columns if c not in META_COLUMNS]
+    columns = [c for c in df.columns if PERIOD_COLUMN.match(str(c))]
     rows = []
     for _, r in df.iterrows():
         label = r.get("label")
