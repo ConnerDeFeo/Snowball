@@ -49,13 +49,10 @@ def _fiscal_focus(report):
 
 
 def _store_sectioned(report, base: str):
-    """Store one txt file per section plus a combined sections.json under `base`."""
-    sections = {}
+    """Store one txt file per section plus statements.json under `base`."""
     for key, section in report.sections.items():
         text = section.text() or ""
         store(f"{base}/{key}.txt", text.encode("utf-8"))
-        sections[key] = text
-    store(f"{base}/sections.json", json.dumps(sections).encode("utf-8"))
     store(f"{base}/statements.json", json.dumps(build_statements(report)).encode("utf-8"))
 
 
@@ -121,8 +118,8 @@ async def get_documents(
     Layout (10-K/10-Q <year>/quarter are fiscal, from XBRL DEI focus facts,
     falling back to calendar-derived values when XBRL is unavailable; DEF 14A
     stays calendar-derived since proxies have no XBRL fiscal data):
-      filings/<tckr>/10-K/<year>/<section>.txt (+ sections.json)
-      filings/<tckr>/10-Q/<year>/Q<n>/<section>.txt (+ sections.json)
+      filings/<tckr>/10-K/<year>/<section>.txt (+ statements.json)
+      filings/<tckr>/10-Q/<year>/Q<n>/<section>.txt (+ statements.json)
       filings/<tckr>/DEF 14A/<year>/proxy.txt
 
     If `on_progress` is given, it's awaited with a "start" event before any
