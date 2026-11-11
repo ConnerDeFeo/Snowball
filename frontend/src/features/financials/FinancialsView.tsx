@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Button from '../../shared/Button'
 import Card from '../../shared/Card'
 import EmptyState from '../../shared/EmptyState'
 import Select from '../../shared/Select'
@@ -12,6 +13,8 @@ interface FinancialsViewProps {
   loading: boolean
   error: string | null
   onRetry: () => void
+  onFetch: () => void
+  fetching: boolean
 }
 
 function filingId(f: FilingStatements): string {
@@ -22,7 +25,7 @@ function filingLabel(f: FilingStatements): string {
   return f.quarter ? `${f.form} ${f.year} ${f.quarter}` : `${f.form} FY${f.year}`
 }
 
-function FinancialsView({ filings, loading, error, onRetry }: FinancialsViewProps) {
+function FinancialsView({ filings, loading, error, onRetry, onFetch, fetching }: FinancialsViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [statementKey, setStatementKey] = useState<StatementKey>('income')
 
@@ -43,7 +46,13 @@ function FinancialsView({ filings, loading, error, onRetry }: FinancialsViewProp
     )
   }
   if (filings.length === 0) {
-    return <EmptyState title="No financial statements yet" description="Fetch filings for this year range to see them here." />
+    return (
+      <EmptyState
+        title="No financial statements yet"
+        description="Fetch filings for this year range to see them here."
+        action={<Button onClick={onFetch} disabled={fetching}>Fetch filings</Button>}
+      />
+    )
   }
 
   const filing = filings.find((f) => filingId(f) === selectedId) ?? filings[0]

@@ -1,7 +1,4 @@
-import { useState } from 'react'
-import TextArea from '../../../../shared/TextArea'
-import Button from '../../../../shared/Button'
-import Spinner from '../../../../shared/Spinner'
+import { useEffect, useState } from 'react'
 import MentionPicker from './MentionPicker'
 import { displayMention } from '../../../../constants/categories'
 import type { YearRange } from '../../../../constants/yearRange'
@@ -11,12 +8,21 @@ interface ChatComposerProps {
   busy: boolean
   range: YearRange
   onSend: (text: string, mentions: Mention[]) => void
+  inputRef: React.RefObject<HTMLTextAreaElement | null>
 }
 
-function ChatComposer({ busy, range, onSend }: ChatComposerProps) {
+function ChatComposer({ busy, range, onSend, inputRef }: ChatComposerProps) {
   const [text, setText] = useState('')
   const [mentions, setMentions] = useState<Mention[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
+
+  // Auto-grow the textarea up to a cap.
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`
+  }, [text, inputRef])
 
   function submit() {
     const trimmed = text.trim()
@@ -44,45 +50,57 @@ function ChatComposer({ busy, range, onSend }: ChatComposerProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2 border-t border-secondary-ice p-3">
+    <div className="relative mx-auto w-full max-w-3xl p-3 pb-5">
       {pickerOpen && (
-        <MentionPicker
-          range={range}
-          onAdd={(m) => setMentions((prev) => [...prev, m])}
-          onClose={() => setPickerOpen(false)}
-        />
-      )}
-
-      {mentions.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {mentions.map((m, i) => (
-            <span
-              key={i}
-              className="inline-flex items-center gap-1 rounded-full border border-secondary-ice bg-secondary-ice/50 px-2.5 py-1 text-xs text-slate-600"
-            >
-              {displayMention(m)}
-              <button
-                onClick={() => setMentions((prev) => prev.filter((_, j) => j !== i))}
-                className="cursor-pointer text-slate-400 hover:text-slate-700"
-                aria-label="Remove mention"
-              >
-                ×
-              </button>
-            </span>
-          ))}
+        <div className="absolute right-3 bottom-full left-3 mb-1">
+          <MentionPicker range={range} onAdd={(m) => setMentions((prev) => [...prev, m])} onClose={() => setPickerOpen(false)} />
         </div>
       )}
 
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <TextArea value={text} onChange={handleChange} placeholder="Ask Snowball... (type @ to add a filing section)" rows={2} onKeyDown={handleKeyDown} disabled={busy} />
+      <div className="rounded-2xl border border-secondary-ice bg-primary px-3 py-2 focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/30">
+        {mentions.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {mentions.map((m, i) => (
+              <span key={i} className="inline-flex items-center gap-1 rounded-full bg-secondary-ice px-2.5 py-0.5 text-xs text-slate-600">
+                {displayMention(m)}
+                <button
+                  onClick={() => setMentions((prev) => prev.filter((_, j) => j !== i))}
+                  className="cursor-pointer text-slate-400 hover:text-slate-700"
+                  aria-label="Remove mention"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={inputRef}
+            value={text}
+            onChange={(e) => handleChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            rows={1}
+            placeholder="Ask Snowball…  ( / to focus )"
+            className="max-h-40 flex-1 resize-none bg-transparent py-1 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+          />
+          <button
+            onClick={() => setPickerOpen(true)}
+            disabled={pickerOpen}
+            title="Attach a filing section"
+            className="h-8 w-8 cursor-pointer rounded-full text-secondary-deep hover:bg-secondary-ice disabled:opacity-40"
+          >
+            @
+          </button>
+          <button
+            onClick={submit}
+            disabled={busy || !text.trim()}
+            title="Send"
+            className="h-8 w-8 cursor-pointer rounded-full bg-secondary text-white hover:bg-secondary-deep disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            ↑
+          </button>
         </div>
-        <Button variant="ghost" onClick={() => setPickerOpen(true)} disabled={busy || pickerOpen}>
-          @
-        </Button>
-        <Button onClick={submit} disabled={busy || !text.trim()}>
-          {busy ? <Spinner /> : 'Send'}
-        </Button>
       </div>
     </div>
   )

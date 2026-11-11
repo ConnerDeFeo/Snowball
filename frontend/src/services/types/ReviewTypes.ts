@@ -16,6 +16,7 @@ export interface ReviewRequest {
 
 export type ReviewFrame =
   | { type: 'start' }
+  | { type: 'token'; text: string }
   | { type: 'progress'; tool: string; args: Record<string, unknown> }
   | { type: 'result'; answer: string; session_id?: string }
   | { type: 'error'; detail: string }

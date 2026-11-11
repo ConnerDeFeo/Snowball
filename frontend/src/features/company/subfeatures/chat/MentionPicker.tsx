@@ -35,7 +35,7 @@ function MentionPicker({ range, onAdd, onClose }: MentionPickerProps) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-secondary-ice bg-secondary-ice/30 p-3">
+    <div className="flex flex-col gap-2 rounded-xl border border-secondary-ice bg-white p-3 shadow-lg">
       <div className="flex gap-2">
         <Select value={form} onChange={handleFormChange} options={SECTION_FORMS.map((f) => ({ value: f, label: f }))} />
         <Select value={year} onChange={setYear} options={years.map((y) => ({ value: y, label: y }))} />

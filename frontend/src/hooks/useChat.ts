@@ -24,18 +24,21 @@ interface UseChatOptions {
 export function useChat({ tckr, range }: UseChatOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [pendingTools, setPendingTools] = useState<ToolCall[]>([])
+  const [draft, setDraft] = useState('')
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the transcript when ticker/range changes
     setMessages([])
     setPendingTools([])
+    setDraft('')
   }, [tckr, range.start, range.end])
 
   const send = useCallback(
     async (text: string, mentions: Mention[] = []) => {
       setMessages((prev) => [...prev, { role: 'user', text }])
       setPendingTools([])
+      setDraft('')
       setBusy(true)
 
       const key = reviewSessionKey(tckr, range.start, range.end)
@@ -49,20 +52,27 @@ export function useChat({ tckr, range }: UseChatOptions) {
           ...(sessionId && { session_id: sessionId }),
           ...(mentions.length > 0 && { mentions }),
         }, (frame) => {
-          if (frame.type === 'progress') {
+          if (frame.type === 'token') {
+            setDraft((prev) => prev + frame.text)
+          } else if (frame.type === 'progress') {
+            // Text written before a tool call is scratch; only the final turn streams.
+            setDraft('')
             setPendingTools((prev) => [...prev, { tool: frame.tool, args: frame.args }])
           } else if (frame.type === 'result') {
             if (frame.session_id) sessionStorage.setItem(key, frame.session_id)
             setMessages((prev) => [...prev, { role: 'assistant', text: frame.answer }])
             setPendingTools([])
+            setDraft('')
           } else if (frame.type === 'error') {
             setMessages((prev) => [...prev, { role: 'assistant', text: frame.detail, isError: true }])
             setPendingTools([])
+            setDraft('')
           }
         })
       } catch (err) {
         const detail = err instanceof ApiError ? err.detail : 'Failed to reach the review agent'
         setMessages((prev) => [...prev, { role: 'assistant', text: detail, isError: true }])
+        setDraft('')
       } finally {
         setBusy(false)
       }
@@ -70,5 +80,5 @@ export function useChat({ tckr, range }: UseChatOptions) {
     [tckr, range.start, range.end],
   )
 
-  return { messages, pendingTools, busy, send }
+  return { messages, pendingTools, draft, busy, send }
 }

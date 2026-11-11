@@ -19,6 +19,11 @@ function writeLocalRecents(recents: RecentCompany[]) {
   localStorage.setItem(RECENTS_KEY, JSON.stringify(recents.slice(0, MAX_RECENTS)))
 }
 
+// The company opened most recently in this browser, if any.
+export function lastCompany(): RecentCompany | undefined {
+  return readLocalRecents()[0]
+}
+
 export function recordRecent(ticker: string, start: number, end: number) {
   const existing = readLocalRecents().filter((r) => r.ticker !== ticker)
   writeLocalRecents([{ ticker, start_year: start, end_year: end }, ...existing])

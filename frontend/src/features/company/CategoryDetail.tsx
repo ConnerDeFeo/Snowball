@@ -1,8 +1,5 @@
-import Card from '../../shared/Card'
 import Button from '../../shared/Button'
-import AnsweredBadge from '../../shared/AnsweredBadge'
 import QuestionRow from './QuestionRow'
-import { countAnswered } from './evidenceStats'
 import type { EvidenceCategory } from '../../services/types/EvidenceTypes'
 
 interface CategoryDetailProps {
@@ -14,32 +11,24 @@ interface CategoryDetailProps {
 
 function CategoryDetail({ category, disabled, onRunCategory, onRunQuestion }: CategoryDetailProps) {
   return (
-    <Card>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <h3 className="text-lg font-bold text-slate-800">{category.name}</h3>
-          <AnsweredBadge answered={countAnswered(category)} total={category.questions.length} />
-        </div>
-        <Button variant="ghost" onClick={onRunCategory} disabled={disabled}>
-          Run category
+    <section className="min-w-0 flex-1 overflow-y-auto pr-1">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-lg font-bold text-slate-800">{category.name}</h3>
+        <Button variant="subtle" size="sm" onClick={onRunCategory} disabled={disabled}>
+          ↻ Run category
         </Button>
       </div>
 
       {category.questions.length === 0 ? (
-        <p className="mt-3 text-sm text-slate-500">This category has no questions yet.</p>
+        <p className="text-sm text-slate-500">This category has no questions yet.</p>
       ) : (
-        <ul className="mt-4 flex flex-col gap-2">
-          {category.questions.map((question) => (
-            <QuestionRow
-              key={question.id}
-              question={question}
-              disabled={disabled}
-              onRun={() => onRunQuestion(question.id)}
-            />
+        <ul className="flex flex-col gap-2">
+          {category.questions.map((q) => (
+            <QuestionRow key={q.id} question={q} disabled={disabled} onRun={() => onRunQuestion(q.id)} />
           ))}
         </ul>
       )}
-    </Card>
+    </section>
   )
 }
 

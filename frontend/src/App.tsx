@@ -5,13 +5,11 @@ import Checklist from './pages/Checklist';
 import CategoryEditor from './features/checklist/CategoryEditor';
 import EmptyState from './shared/EmptyState';
 import ToastProvider from './shared/toast/ToastProvider';
-import Header from './shared/Header';
 
 function App() {
   return (
     <ToastProvider>
       <BrowserRouter>
-      <Header />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/company/:tckr" element={<Company />} />

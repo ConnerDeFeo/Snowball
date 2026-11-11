@@ -1,30 +1,30 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import YearRangePicker from '../features/company/YearRangePicker';
-import CompanyActions from '../features/company/CompanyActions';
-import RunBanner from '../features/company/RunBanner';
+import AppShell from '../shared/layout/AppShell';
+import CompanyControls from '../features/sidebar/CompanyControls';
 import ChecklistView from '../features/company/ChecklistView';
 import FinancialsView from '../features/financials/FinancialsView';
+import ChatView from '../features/company/subfeatures/chat/ChatView';
 import { mergeEvidence } from '../features/company/mergeEvidence';
-import ChatPanel from '../features/company/subfeatures/chat/ChatPanel';
-import Tabs from '../shared/Tabs';
-import { COMPANY_TABS } from '../constants/companyTabs';
+import { countAnswered } from '../features/company/evidenceStats';
 import { useYearRange } from '../hooks/useYearRange';
+import { useCompanyView } from '../hooks/useCompanyView';
+import { useSlashToChat } from '../hooks/useSlashToChat';
+import { useChat } from '../hooks/useChat';
 import { useEvidenceRun } from '../hooks/useEvidenceRun';
 import { useEvidence } from '../hooks/useEvidence';
 import { useFinancials } from '../hooks/useFinancials';
 import { recordRecent } from '../hooks/useRecents';
-import type { CompanyTab } from '../constants/companyTabs';
 import type { EvidenceCategory } from '../services/types/EvidenceTypes';
 
 function Company() {
   const { tckr = '' } = useParams<{ tckr: string }>()
   const { range, setRange } = useYearRange()
+  const { view, setView } = useCompanyView()
   const [sessionEvidence, setSessionEvidence] = useState<EvidenceCategory[]>([])
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [chatOpen, setChatOpen] = useState(false)
-  const [tab, setTab] = useState<CompanyTab>('checklist')
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
+  const chat = useChat({ tckr, range })
   const { serverEvidence, error, loading, refresh } = useEvidence(tckr, range)
   const financials = useFinancials(tckr, range)
 
@@ -38,7 +38,8 @@ function Company() {
     if (tckr) recordRecent(tckr, range.start, range.end)
     // eslint-disable-next-line react-hooks/set-state-in-effect -- drops this tab's run results when ticker/range changes
     setSessionEvidence([])
-  }, [tckr, range.start, range.end])
+    cancel() // clear the previous company's run state (and its error banner)
+  }, [tckr, range.start, range.end, cancel])
 
   // A finished run may have just downloaded new filings, so reload their statements.
   const { refresh: refreshFinancials } = financials
@@ -46,49 +47,59 @@ function Company() {
     if (state.phase === 'done') refreshFinancials()
   }, [state.phase, refreshFinancials])
 
+  useSlashToChat(() => {
+    if (view !== 'chat') setView('chat')
+    requestAnimationFrame(() => inputRef.current?.focus())
+  })
+
   const categories = mergeEvidence(serverEvidence, sessionEvidence)
   const active = state.phase === 'fetching-docs' || state.phase === 'running'
+  const answered = categories.reduce((sum, c) => sum + countAnswered(c), 0)
+  const total = categories.reduce((sum, c) => sum + c.questions.length, 0)
+
+  const controls = (
+    <CompanyControls
+      tckr={tckr}
+      range={range}
+      onRangeChange={setRange}
+      view={view}
+      onViewChange={setView}
+      checklistCount={total > 0 ? `${answered}/${total}` : ''}
+      state={state}
+      active={active}
+      onRun={() => start({ kind: 'checklist' })}
+      onCancel={cancel}
+    />
+  )
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-10">
-      <h1 className="text-3xl font-bold text-slate-800">{tckr}</h1>
-
-      <div className='flex justify-between items-center'>
-        <CompanyActions
-          active={active}
-          onFetchFilings={() => start({ kind: 'documents-only' })}
-          onRunChecklist={() => start({ kind: 'checklist' })}
-          onAskSnowball={() => setChatOpen(true)}
-        />
-        <YearRangePicker range={range} onChange={setRange} />
-      </div>
-
-      <RunBanner state={state} onCancel={cancel} />
-
-      <Tabs options={COMPANY_TABS} value={tab} onChange={setTab} />
-
-      {tab === 'checklist' ? (
-        <ChecklistView
-          categories={categories}
-          loading={loading}
-          error={error}
-          onRetry={refresh}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          active={active}
-          onStart={start}
-        />
-      ) : (
-        <FinancialsView
-          filings={financials.filings}
-          loading={financials.loading}
-          error={financials.error}
-          onRetry={financials.refresh}
-        />
+    <AppShell controls={controls}>
+      {view === 'chat' && <ChatView tckr={tckr} range={range} chat={chat} inputRef={inputRef} />}
+      {view === 'checklist' && (
+        <div className="h-full p-6">
+          <ChecklistView
+            categories={categories}
+            loading={loading}
+            error={error}
+            onRetry={refresh}
+            active={active}
+            onStart={start}
+          />
+        </div>
       )}
-
-      <ChatPanel tckr={tckr} range={range} open={chatOpen} onClose={() => setChatOpen(false)} />
-    </div>
+      {view === 'financials' && (
+        <div className="h-full overflow-y-auto p-6">
+          <FinancialsView
+            filings={financials.filings}
+            loading={financials.loading}
+            error={financials.error}
+            onRetry={financials.refresh}
+            onFetch={() => start({ kind: 'documents-only' })}
+            fetching={active}
+          />
+        </div>
+      )}
+    </AppShell>
   )
 }
 

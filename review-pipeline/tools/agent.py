@@ -4,9 +4,17 @@ from typing import Awaitable, Callable, Optional
 
 from langchain_aws import ChatBedrock
 from langchain.agents import create_agent
+from langchain_core.messages import AIMessageChunk
 from langchain_core.tools import tool
 from filings.read_section import read_section as fetch_section
 from utils import analysis_client
+
+def _text_of(content) -> str:
+    # Bedrock content is a str or a list of {"type": "text", "text": ...} blocks.
+    if isinstance(content, str):
+        return content
+    return "".join(b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text")
+
 
 async def run_agent(
     tckr:str, start_year:int, end_year:int,
@@ -38,7 +46,7 @@ async def run_agent(
         except Exception as e:
             return f"could not fetch evidence: {e}"
 
-    llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2", max_tokens=4096)
+    llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2", max_tokens=4096, streaming=True)
     agent = create_agent(
         model=llm,
         tools=[read_section, get_evidence],
@@ -62,16 +70,24 @@ async def run_agent(
     # Stream node-by-node updates so we can report each tool call as it happens,
     # and keep the latest assistant text as the running answer.
     final_text = ""
-    async for chunk in agent.astream({"messages": messages}, stream_mode="updates"):
-        for update in chunk.values():
+    async for mode, data in agent.astream({"messages": messages}, stream_mode=["updates", "messages"]):
+        if mode == "messages":
+            # Token-level chunks from the model; forward text to the client as it arrives.
+            chunk = data[0]
+            if not isinstance(chunk, AIMessageChunk):  # skip tool results
+                continue
+            text = _text_of(chunk.content)
+            if on_progress and text and not chunk.tool_call_chunks:
+                await on_progress({"type": "token", "text": text})
+            continue
+        for update in data.values():
             for msg in update.get("messages", []):
                 tool_calls = getattr(msg, "tool_calls", None) or []
                 if on_progress:
                     for call in tool_calls:
                         await on_progress({"type": "progress", "tool": call["name"], "args": call.get("args", {})})
                 if getattr(msg, "type", None) == "ai" and not tool_calls:
-                    content = msg.content
-                    final_text = content if isinstance(content, str) else str(content)
+                    final_text = _text_of(msg.content)
 
     updated_history = messages + [{"role": "assistant", "content": final_text}]
     return final_text, updated_history
