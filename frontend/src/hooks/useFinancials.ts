@@ -35,6 +35,7 @@ export function useFinancials(tckr: string, range: YearRange) {
     refresh()
   }, [refresh])
 
-  const filings = data.key === key ? data.filings : []
-  return { filings, error, loading, refresh }
+  const current = data.key === key
+  // Not loaded until data for this ticker/range has arrived (avoids a false "empty" right after a switch).
+  return { filings: current ? data.filings : [], error, loading: loading || !current, refresh }
 }

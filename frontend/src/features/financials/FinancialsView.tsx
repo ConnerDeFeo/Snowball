@@ -3,6 +3,7 @@ import Button from '../../shared/Button'
 import Card from '../../shared/Card'
 import EmptyState from '../../shared/EmptyState'
 import Select from '../../shared/Select'
+import Spinner from '../../shared/Spinner'
 import Tabs from '../../shared/Tabs'
 import StatementTable from './StatementTable'
 import { STATEMENTS } from '../../constants/statements'
@@ -50,7 +51,13 @@ function FinancialsView({ filings, loading, error, onRetry, onFetch, fetching }:
       <EmptyState
         title="No financial statements yet"
         description="Fetch filings for this year range to see them here."
-        action={<Button onClick={onFetch} disabled={fetching}>Fetch filings</Button>}
+        action={
+          fetching ? (
+            <span className="flex items-center gap-2 text-sm text-slate-500"><Spinner /> Fetching filings…</span>
+          ) : (
+            <Button onClick={onFetch}>Fetch filings</Button>
+          )
+        }
       />
     )
   }

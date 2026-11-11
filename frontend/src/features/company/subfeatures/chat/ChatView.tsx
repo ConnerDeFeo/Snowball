@@ -16,8 +16,7 @@ function ChatView({ tckr, range, chat, inputRef }: ChatViewProps) {
       <ChatTranscript
         tckr={tckr}
         messages={chat.messages}
-        pendingTools={chat.pendingTools}
-        draft={chat.draft}
+        live={chat.live}
         busy={chat.busy}
         onSuggest={chat.send}
       />

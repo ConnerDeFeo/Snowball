@@ -1,24 +1,25 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import ChatMessage from './ChatMessage'
-import ToolCallChip from './ToolCallChip'
+import { useStickToBottom } from '../../../../hooks/useStickToBottom'
 import { CHAT_SUGGESTIONS } from '../../../../constants/chatSuggestions'
-import type { ChatMessage as ChatMessageType, ToolCall } from '../../../../hooks/useChat'
+import type { ChatMessage as ChatMessageType, ChatPart } from '../../../../hooks/useChat'
 
 interface ChatTranscriptProps {
   tckr: string
   messages: ChatMessageType[]
-  pendingTools: ToolCall[]
-  draft: string
+  live: ChatPart[]
   busy: boolean
   onSuggest: (text: string) => void
 }
 
-function ChatTranscript({ tckr, messages, pendingTools, draft, busy, onSuggest }: ChatTranscriptProps) {
-  const bottomRef = useRef<HTMLDivElement>(null)
+function ChatTranscript({ tckr, messages, live, busy, onSuggest }: ChatTranscriptProps) {
+  const { scrollRef, contentRef, onScroll, pin } = useStickToBottom()
 
+  // Sending a message resumes following the bottom.
+  const lastRole = messages[messages.length - 1]?.role
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'auto' })
-  }, [messages, pendingTools, draft])
+    if (lastRole === 'user') pin()
+  }, [messages.length, lastRole, pin])
 
   if (messages.length === 0 && !busy) {
     return (
@@ -43,22 +44,17 @@ function ChatTranscript({ tckr, messages, pendingTools, draft, busy, onSuggest }
     )
   }
 
+  // Waiting: nothing has streamed yet, or the last thing was a tool call still running.
+  const waiting = busy && (live.length === 0 || live[live.length - 1].kind === 'tool')
+
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-4">
+    <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto">
+      <div ref={contentRef} className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-4">
         {messages.map((m, i) => (
           <ChatMessage key={i} {...m} />
         ))}
-        {busy && pendingTools.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {pendingTools.map((t, i) => (
-              <ToolCallChip key={i} {...t} />
-            ))}
-          </div>
-        )}
-        {busy && draft && <ChatMessage role="assistant" text={draft} streaming />}
-        {busy && !draft && <p className="animate-pulse text-sm text-slate-400">Thinking…</p>}
-        <div ref={bottomRef} />
+        {busy && live.length > 0 && <ChatMessage role="assistant" text="" parts={live} streaming />}
+        {waiting && <p className="animate-pulse text-sm text-slate-400">Thinking…</p>}
       </div>
     </div>
   )

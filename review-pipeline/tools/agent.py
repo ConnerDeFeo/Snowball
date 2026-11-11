@@ -6,6 +6,7 @@ from langchain_aws import ChatBedrock
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessageChunk
 from langchain_core.tools import tool
+from filings.manifest import filings_manifest
 from filings.read_section import read_section as fetch_section
 from utils import analysis_client
 
@@ -46,18 +47,31 @@ async def run_agent(
         except Exception as e:
             return f"could not fetch evidence: {e}"
 
+    @tool
+    def fetch_filings() -> str:
+        """Download this company's 10-K/10-Q/proxy filings for the year range from SEC EDGAR.
+        Call this first if the filings manifest is empty. Returns the updated manifest."""
+        try:
+            result = analysis_client.fetch_documents(tckr, start_year, end_year)
+        except Exception as e:
+            return f"could not fetch filings: {e}"
+        if result.get("type") == "error":
+            return f"could not fetch filings: {result.get('detail')}"
+        return filings_manifest(tckr, start_year, end_year) or "(no sections found after fetching)"
+
     llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2", max_tokens=4096, streaming=True)
     agent = create_agent(
         model=llm,
-        tools=[read_section, get_evidence],
+        tools=[read_section, get_evidence, fetch_filings],
         system_prompt=(
             f"You answer questions about {tckr}'s SEC filings ({start_year}-{end_year}).\n\n"
             f"Sections the user mentioned (full text, may be empty):\n{mentions_text or '(none)'}\n\n"
-            f"Cached filing sections (year | form | period, then section):\n{filings_manifest_text}\n\n"
+            f"Cached filing sections (year | form | period, then section):\n{filings_manifest_text or '(none cached)'}\n\n"
             f"Checklist questions ([id] text):\n{checklist_manifest_text}\n\n"
             "Answer from the mentioned sections first. Call read_section to read any other "
             "section in the filings manifest (use year/form/period/section exactly as written there). "
             "Call get_evidence for the evidence behind a checklist question. "
+            "If the filings manifest is empty, call fetch_filings before answering. "
             "Cite the form, year and section you relied on."
         ),
     )
@@ -68,8 +82,8 @@ async def run_agent(
     messages = (history or []) + [{"role": "user", "content": user_text}]
 
     # Stream node-by-node updates so we can report each tool call as it happens,
-    # and keep the latest assistant text as the running answer.
-    final_text = ""
+    # and collect the text of every assistant message (including text written before a tool call).
+    segments: list[str] = []
     async for mode, data in agent.astream({"messages": messages}, stream_mode=["updates", "messages"]):
         if mode == "messages":
             # Token-level chunks from the model; forward text to the client as it arrives.
@@ -86,8 +100,11 @@ async def run_agent(
                 if on_progress:
                     for call in tool_calls:
                         await on_progress({"type": "progress", "tool": call["name"], "args": call.get("args", {})})
-                if getattr(msg, "type", None) == "ai" and not tool_calls:
-                    final_text = _text_of(msg.content)
+                if getattr(msg, "type", None) == "ai":
+                    text = _text_of(msg.content).strip()
+                    if text:
+                        segments.append(text)
 
+    final_text = "\n\n".join(segments)
     updated_history = messages + [{"role": "assistant", "content": final_text}]
     return final_text, updated_history

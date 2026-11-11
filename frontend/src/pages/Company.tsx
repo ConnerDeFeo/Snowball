@@ -9,6 +9,7 @@ import { mergeEvidence } from '../features/company/mergeEvidence';
 import { countAnswered } from '../features/company/evidenceStats';
 import { useYearRange } from '../hooks/useYearRange';
 import { useCompanyView } from '../hooks/useCompanyView';
+import { useAutoFetchFilings } from '../hooks/useAutoFetchFilings';
 import { useSlashToChat } from '../hooks/useSlashToChat';
 import { useChat } from '../hooks/useChat';
 import { useEvidenceRun } from '../hooks/useEvidenceRun';
@@ -46,6 +47,15 @@ function Company() {
   useEffect(() => {
     if (state.phase === 'done') refreshFinancials()
   }, [state.phase, refreshFinancials])
+
+  // Opening Financials with nothing cached fetches the filings automatically.
+  useAutoFetchFilings({
+    enabled: view === 'financials',
+    empty: !financials.loading && !financials.error && financials.filings.length === 0,
+    busy: state.phase === 'fetching-docs' || state.phase === 'running',
+    fetch: () => start({ kind: 'documents-only' }),
+    key: `${tckr}:${range.start}-${range.end}`,
+  })
 
   useSlashToChat(() => {
     if (view !== 'chat') setView('chat')
