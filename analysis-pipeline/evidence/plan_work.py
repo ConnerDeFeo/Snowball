@@ -1,9 +1,9 @@
 from enums.Sections import Section, section_from_form
 
-# Orders filings chronologically: year first, then quarter ("FY"/None sorts as
-# the annual filing within its year).
+# Orders filings chronologically: year first, then quarter. A 10-K has no quarter
+# (None) and covers the whole fiscal year, so it sorts after Q1-Q4 of that year.
 def sort_key(year: str | int, quarter: str | None) -> tuple:
-    return (int(year), quarter or "")
+    return (int(year), quarter or "Q9")
 
 # Every distinct section the selected questions point at, so a run fetches each
 # one from S3 once instead of once per question.
