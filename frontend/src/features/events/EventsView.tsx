@@ -46,7 +46,7 @@ function EventsView({ tckr, events, loading, error, onRetry, fetching }: EventsV
   const selected = events.find((e) => e.id === selectedId) ?? events[0]
 
   return (
-    <div className="grid gap-4 md:grid-cols-[18rem_1fr]">
+    <div className="grid gap-4 md:grid-cols-[12rem_minmax(0,1fr)]">
       <EventList events={events} selectedId={selected.id} onSelect={setSelectedId} />
       <EventDocument tckr={tckr} id={selected.id} />
     </div>

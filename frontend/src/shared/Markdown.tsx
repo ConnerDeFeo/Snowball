@@ -20,7 +20,7 @@ const STYLES = [
 
 function Markdown({ children }: { children: string }) {
   return (
-    <div className={`break-words ${STYLES}`}>
+    <div className={`wrap-break-word ${STYLES}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
     </div>
   )
