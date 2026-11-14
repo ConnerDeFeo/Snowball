@@ -73,3 +73,9 @@ class FetchDocuments:
         filings = self.company.get_filings(form=FormType.PROXY.value).filter(date=f"{start_year}-01-01:{end_year}-12-31")
 
         return list(filings)
+
+    # 8-K Retrieval (Filing objects; stored as markdown, so no .obj() parse here)
+    def fetch_multiple_8k(self, start_year: int, end_year: int):
+        filings = self.company.get_filings(form=FormType.EIGHT_K.value).filter(date=f"{start_year}-01-01:{end_year}-12-31")
+
+        return list(filings)

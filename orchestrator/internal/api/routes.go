@@ -35,6 +35,10 @@ func NewRouter(apc *analysispipeline.Client, rpc *reviewpipeline.Client) *http.S
 	// Financial statements (plain JSON)
 	mux.HandleFunc("GET /financials/{tckr}", apc.HandleFinancials)
 
+	// 8-K events: list and single markdown body (plain JSON)
+	mux.HandleFunc("GET /events/{tckr}", apc.HandleEvents)
+	mux.HandleFunc("GET /events/{tckr}/{event_id}", apc.HandleEvents)
+
 	// Company list (plain JSON, not SSE)
 	mux.HandleFunc("GET /companies", apc.HandleCompanies)
 

@@ -10,7 +10,7 @@ interface CategorySidebarProps {
 
 function CategorySidebar({ categories, selectedId, onSelect }: CategorySidebarProps) {
   return (
-    <nav className="flex w-56 shrink-0 flex-col gap-1 overflow-y-auto">
+    <nav className="flex flex-col gap-1">
       {categories.map((c) => (
         <button
           key={c.id}

@@ -3,6 +3,7 @@ import * as ReviewService from '../services/ReviewService'
 import { ApiError } from '../services/API'
 import { reviewSessionKey } from '../constants/storageKeys'
 import type { YearRange } from '../constants/yearRange'
+import type { ChatModel } from '../constants/chatModels'
 import type { Mention } from '../services/types/ReviewTypes'
 
 // One piece of an assistant turn, in the order it happened.
@@ -25,9 +26,10 @@ export interface ToolCall {
 interface UseChatOptions {
   tckr: string
   range: YearRange
+  model: ChatModel
 }
 
-export function useChat({ tckr, range }: UseChatOptions) {
+export function useChat({ tckr, range, model }: UseChatOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [live, setLive] = useState<ChatPart[]>([])
   const liveRef = useRef<ChatPart[]>([]) // latest live parts, readable from the stream callback
@@ -69,6 +71,7 @@ export function useChat({ tckr, range }: UseChatOptions) {
           start_year: range.start,
           end_year: range.end,
           user_text: text,
+          model,
           ...(sessionId && { session_id: sessionId }),
           ...(mentions.length > 0 && { mentions }),
         }, (frame) => {
@@ -97,7 +100,7 @@ export function useChat({ tckr, range }: UseChatOptions) {
         setBusy(false)
       }
     },
-    [tckr, range.start, range.end, updateLive],
+    [tckr, range.start, range.end, model, updateLive],
   )
 
   return { messages, live, busy, send }

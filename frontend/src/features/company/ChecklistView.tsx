@@ -2,8 +2,11 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import CategorySidebar from './CategorySidebar'
 import CategoryDetail from './CategoryDetail'
+import CompanyActions from './CompanyActions'
+import RunBanner from './RunBanner'
 import EmptyState from '../../shared/EmptyState'
 import type { RunTarget } from '../../hooks/useEvidenceRun'
+import type { RunState } from '../../hooks/evidenceRunReducer'
 import type { EvidenceCategory } from '../../services/types/EvidenceTypes'
 
 interface ChecklistViewProps {
@@ -12,10 +15,13 @@ interface ChecklistViewProps {
   error: string | null
   onRetry: () => void
   active: boolean
+  state: RunState
   onStart: (target: RunTarget) => void
+  onRun: () => void
+  onCancel: () => void
 }
 
-function ChecklistView({ categories, loading, error, onRetry, active, onStart }: ChecklistViewProps) {
+function ChecklistView({ categories, loading, error, onRetry, active, state, onStart, onRun, onCancel }: ChecklistViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = categories.find((c) => c.id === selectedId) ?? categories[0]
 
@@ -43,7 +49,11 @@ function ChecklistView({ categories, loading, error, onRetry, active, onStart }:
 
   return (
     <div className="flex h-full gap-6">
-      <CategorySidebar categories={categories} selectedId={selected.id} onSelect={setSelectedId} />
+      <div className="flex w-56 shrink-0 flex-col gap-3 overflow-y-auto">
+        <CategorySidebar categories={categories} selectedId={selected.id} onSelect={setSelectedId} />
+        <CompanyActions active={active} onRun={onRun} onCancel={onCancel} />
+        <RunBanner state={state} />
+      </div>
       <CategoryDetail
         category={selected}
         disabled={active}

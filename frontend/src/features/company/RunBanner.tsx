@@ -7,7 +7,7 @@ interface RunBannerProps {
   state: RunState
 }
 
-// Compact progress for the sidebar: a bar with a short title, and the current filing below it.
+// Compact run progress: a bar with a short title, and the current filing below it.
 function RunBanner({ state }: RunBannerProps) {
   if (state.phase === 'idle' || state.phase === 'done') return null
 

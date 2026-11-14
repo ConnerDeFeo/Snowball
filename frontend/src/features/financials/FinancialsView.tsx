@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import Button from '../../shared/Button'
 import Card from '../../shared/Card'
 import EmptyState from '../../shared/EmptyState'
 import Select from '../../shared/Select'
@@ -14,7 +13,6 @@ interface FinancialsViewProps {
   loading: boolean
   error: string | null
   onRetry: () => void
-  onFetch: () => void
   fetching: boolean
 }
 
@@ -26,7 +24,7 @@ function filingLabel(f: FilingStatements): string {
   return f.quarter ? `${f.form} ${f.year} ${f.quarter}` : `${f.form} FY${f.year}`
 }
 
-function FinancialsView({ filings, loading, error, onRetry, onFetch, fetching }: FinancialsViewProps) {
+function FinancialsView({ filings, loading, error, onRetry, fetching }: FinancialsViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [statementKey, setStatementKey] = useState<StatementKey>('income')
 
@@ -52,10 +50,8 @@ function FinancialsView({ filings, loading, error, onRetry, onFetch, fetching }:
         title="No financial statements yet"
         description="Fetch filings for this year range to see them here."
         action={
-          fetching ? (
+          fetching && (
             <span className="flex items-center gap-2 text-sm text-slate-500"><Spinner /> Fetching filings…</span>
-          ) : (
-            <Button onClick={onFetch}>Fetch filings</Button>
           )
         }
       />

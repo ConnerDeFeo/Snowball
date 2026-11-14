@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import MentionPicker from './MentionPicker'
+import Select from '../../../../shared/Select'
 import { displayMention } from '../../../../constants/categories'
+import { CHAT_MODELS } from '../../../../constants/chatModels'
+import type { ChatModel } from '../../../../constants/chatModels'
 import type { YearRange } from '../../../../constants/yearRange'
 import type { Mention } from '../../../../services/types/ReviewTypes'
 
@@ -9,9 +12,11 @@ interface ChatComposerProps {
   range: YearRange
   onSend: (text: string, mentions: Mention[]) => void
   inputRef: React.RefObject<HTMLTextAreaElement | null>
+  model: ChatModel
+  onModelChange: (model: ChatModel) => void
 }
 
-function ChatComposer({ busy, range, onSend, inputRef }: ChatComposerProps) {
+function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange }: ChatComposerProps) {
   const [text, setText] = useState('')
   const [mentions, setMentions] = useState<Mention[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -84,6 +89,15 @@ function ChatComposer({ busy, range, onSend, inputRef }: ChatComposerProps) {
             placeholder="Ask Snowball…  ( / to focus )"
             className="max-h-40 flex-1 resize-none bg-transparent py-1 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
           />
+          <div className="w-28 shrink-0">
+            <Select
+              value={model}
+              onChange={(v) => onModelChange(v as ChatModel)}
+              options={[...CHAT_MODELS]}
+              disabled={busy}
+              compact
+            />
+          </div>
           <button
             onClick={() => setPickerOpen(true)}
             disabled={pickerOpen}

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from routes.checklist import router as checklist_router
 from routes.companies import router as companies_router
 from routes.document_retrieval import router as document_retrieval_router
+from routes.events import router as events_router
 from routes.evidence import router as evidence_router
 from routes.financials import router as financials_router
 from routes.health import router as health_router
@@ -22,6 +23,7 @@ def create_app():
     app.include_router(checklist_router)
     app.include_router(companies_router)
     app.include_router(document_retrieval_router)
+    app.include_router(events_router)
     app.include_router(evidence_router)
     app.include_router(financials_router)
     app.include_router(health_router)
