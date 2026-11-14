@@ -2,16 +2,16 @@ from enums.Sections import Section, section_from_form
 from evidence import evidence_cache
 from evidence.instructions import SUB_AGENT_BASE_INSTRUCTIONS
 from evidence.types import EvidenceResponse
-from utils import bedrock
+from utils import llm
 from utils.parse_response import invoke_parsed
 
-# The prompt is split around a Bedrock cachePoint: `cached_prefix` (section +
+# The prompt is split around a cache_control breakpoint: `cached_prefix` (section +
 # excerpt) is identical for every question that reads this same block, so only
 # the first one pays to process it; every other question's call reads it back
 # from cache. `tail` (the question itself) is the part that varies.
 #
 # `use_cache` should only be True when another question will also read this
-# same block — the cachePoint write costs 1.25x normal input tokens, which is
+# same block — the cache write costs 1.25x normal input tokens, which is
 # wasted if nothing ever reads it back.
 def extract_evidence(section_text: str, section: Section, prompt: str, label: str = "", use_cache: bool = True) -> EvidenceResponse:
     cached_prefix = f"""
@@ -26,12 +26,12 @@ def extract_evidence(section_text: str, section: Section, prompt: str, label: st
 
     def _call() -> str:
         if use_cache:
-            return bedrock.invoke_cached(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix, tail, label=label)
-        return bedrock.invoke(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix + tail)
+            return llm.invoke_cached(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix, tail, label=label)
+        return llm.invoke(SUB_AGENT_BASE_INSTRUCTIONS, cached_prefix + tail)
 
     return invoke_parsed(_call, EvidenceResponse, label=label)
 
-# Runs one work item (question + block) through Bedrock and caches the result.
+# Runs one work item (question + block) through Claude and caches the result.
 def extract_and_store(tckr: str, item: dict, use_cache: bool) -> EvidenceResponse:
     question, block = item["question"], item["block"]
     section = section_from_form(block["form"], block["section"])

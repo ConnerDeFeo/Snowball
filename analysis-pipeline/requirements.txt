@@ -3,6 +3,7 @@ uvicorn[standard]
 gunicorn
 pydantic
 boto3
+anthropic
 edgartools
 python-multipart
 python-dotenv

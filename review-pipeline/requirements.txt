@@ -3,5 +3,5 @@ uvicorn[standard]
 gunicorn
 boto3
 langchain
-langchain-aws
+langchain-anthropic
 pydantic

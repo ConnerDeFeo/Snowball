@@ -20,7 +20,7 @@ async def run_evidence_route(
     return sse_response(job)
 
 
-# Reads stored evidence without calling Bedrock.
+# Reads stored evidence without calling the LLM.
 @router.get("/evidence/{tckr}")
 def get_evidence_route(
     tckr: str, start_year: int, end_year: int,

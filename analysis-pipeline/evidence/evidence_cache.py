@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 from evidence.instructions import BASE_VERSION
 from evidence.types import EvidenceResponse
-from utils import bedrock
+from utils import llm
 from utils.dynamo import evidence_table
 
 # Combines the base-instructions version with the question's own version, so
@@ -22,7 +22,7 @@ def _key(question: dict, block: dict) -> str:
     return "#".join([
         question["id"],
         block["year"], block["form"], block.get("quarter", "FY"),
-        version_tag(question), bedrock.MODEL_ID,
+        version_tag(question), llm.MODEL_ID,
     ])
 
 # Returns None on a cache miss.
@@ -30,7 +30,7 @@ def get_cached(tckr: str, question: dict, block: dict) -> EvidenceResponse | Non
     item = evidence_table.get(tckr, _key(question, block))
     return EvidenceResponse.model_validate_json(item["evidence_json"]) if item else None
 
-# Persists evidence so future runs of this exact block/question/version skip Bedrock.
+# Persists evidence so future runs of this exact block/question/version skip the LLM call.
 def store(tckr: str, question: dict, block: dict, evidence: EvidenceResponse) -> None:
     evidence_table.put(
         tckr,

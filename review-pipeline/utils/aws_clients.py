@@ -7,6 +7,3 @@ def dynamo_client():
 
 def s3_client():
     return boto3.client("s3")
-
-def bedrock_client():
-    return boto3.client("bedrock-runtime")

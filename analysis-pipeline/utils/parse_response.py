@@ -9,10 +9,10 @@ MAX_PARSE_ATTEMPTS = 3  # 1 initial try + 2 retries on invalid JSON
 
 T = TypeVar("T", bound=BaseModel)
 
-# Bedrock occasionally emits structurally invalid JSON (e.g. an unescaped
+# The model occasionally emits structurally invalid JSON (e.g. an unescaped
 # quote inside a verbatim filing quote/snippet), even with stop_reason=end_turn.
 # Retry a few times before giving up, since re-sampling usually produces valid
-# JSON. `call` is a zero-arg closure so callers keep their own Bedrock
+# JSON. `call` is a zero-arg closure so callers keep their own LLM
 # invocation shape (invoke vs invoke_cached) without this helper knowing
 # about either.
 def invoke_parsed(call: Callable[[], str], model: type[T], label: str = "") -> T:

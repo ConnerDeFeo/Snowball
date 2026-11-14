@@ -37,8 +37,8 @@ container lives in that container's folder, not in `api/`.
 ### Analysis pipeline layout
 - `document_retrieval/` — fetches public company documents; calls `utils/` to cache them to S3
 - `checklist/` — CRUD for categories, questions (config lives in DynamoDB, editable without a redeploy)
-- `evidence/` — runs the checklist: fetches sections, calls Bedrock per question, caches and reads back evidence
-- `utils/` — shared helpers (S3, Dynamo wrappers, Bedrock, SSE)
+- `evidence/` — runs the checklist: fetches sections, calls Claude (Anthropic SDK) per question, caches and reads back evidence
+- `utils/` — shared helpers (S3, Dynamo wrappers, Anthropic LLM client, SSE)
 - `routes/` — HTTP route handlers (`/checklist...`, `/evidence...`, `/documents`, `/companies`)
 
 How a run works: a question targets one `form#section`. For each filing in the
@@ -46,7 +46,7 @@ year window that has that section, its agent gets the section text plus the ques
 (the prompt), and returns findings. A question's `latest_only` flag restricts it to the
 most recent filing. Evidence is cached in DynamoDB keyed by question and its
 version, so editing a question invalidates only that question's evidence.
-Questions that read the same section share a Bedrock prompt cache.
+Questions that read the same section share an Anthropic prompt cache.
 
 ### Front end rules
 

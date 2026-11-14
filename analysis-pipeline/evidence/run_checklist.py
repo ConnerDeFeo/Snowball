@@ -11,14 +11,14 @@ from utils.dynamo import companies_table
 
 logger = logging.getLogger(__name__)
 
-MAX_WORKERS = 8  # cap concurrent Bedrock sub-agent calls per run
+MAX_WORKERS = 8  # cap concurrent LLM sub-agent calls per run
 
 def _block_id(block: dict) -> tuple:
     return (block["form"], block["year"], block.get("quarter"), block["section"])
 
 # Runs the selected part of the checklist (everything, one category, or one
 # question) for one ticker/period. Fetches each unique filing section once, and
-# runs the questions that share a section back-to-back so Bedrock prompt
+# runs the questions that share a section back-to-back so prompt
 # caching (see extract.extract_evidence) only pays to process that section's
 # text once per block instead of once per question.
 async def run_checklist(
@@ -33,7 +33,7 @@ async def run_checklist(
     blocks = await asyncio.to_thread(fetch_sections, tckr, start_year, end_year, plan_work.locations(categories))
     work = plan_work.plan(categories, blocks)
 
-    # Evidence cached under the current prompt + model versions needs no Bedrock call.
+    # Evidence cached under the current prompt + model versions needs no LLM call.
     cached = await asyncio.gather(*[
         asyncio.to_thread(evidence_cache.get_cached, tckr, w["question"], w["block"])
         for w in work
@@ -53,7 +53,7 @@ async def run_checklist(
     sem = asyncio.Semaphore(MAX_WORKERS)
     completed = 0
 
-    # A single question/block can fail (e.g. Bedrock returning unparseable
+    # A single question/block can fail (e.g. the model returning unparseable
     # JSON after retries) without aborting the rest of the run — it's skipped,
     # so that question ends up with less evidence instead of no results at all.
     async def _run(item: dict, use_cache: bool) -> None:

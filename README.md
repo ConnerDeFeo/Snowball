@@ -18,7 +18,7 @@ Point it at a ticker. It pulls the 10-Ks, 10-Qs, and proxy statements straight f
 
 ## Quickstart
 
-**Prerequisites:** Docker, AWS credentials in `~/.aws` with Bedrock/S3/DynamoDB access in `us-east-2`, and Node 20+ for the frontend.
+**Prerequisites:** Docker, AWS credentials in `~/.aws` with S3/DynamoDB access in `us-east-2`, an Anthropic login profile (`ant auth login`; Windows keeps it in `%APPDATA%\Anthropic`, mounted into the containers by `docker-compose.yml`), and Node 20+ for the frontend.
 
 ```bash
 # EDGAR requires an identity string on every request
@@ -47,7 +47,7 @@ flowchart LR
     AP["Analysis Pipeline<br/>FastAPI"]
     RP["Review Pipeline<br/>FastAPI · LangChain"]
     EDGAR[("SEC EDGAR")]
-    BR["AWS Bedrock<br/>Claude Haiku 4.5"]
+    BR["Anthropic API<br/>Claude Haiku 5.5"]
     S3[("S3<br/>filing sections")]
     DDB[("DynamoDB<br/>checklist · evidence")]
 
@@ -63,7 +63,7 @@ flowchart LR
     RP -->|"stored evidence"| AP
 ```
 
-**Request path for a checklist run:** the browser opens an SSE stream to the orchestrator, which proxies it to the analysis pipeline. That pipeline fetches each unique filing section once, fans out one Bedrock call per sub-agent per filing, and emits a progress event per completed call — so the UI shows real per-section progress rather than a spinner.
+**Request path for a checklist run:** the browser opens an SSE stream to the orchestrator, which proxies it to the analysis pipeline. That pipeline fetches each unique filing section once, fans out one Claude call per sub-agent per filing, and emits a progress event per completed call — so the UI shows real per-section progress rather than a spinner.
 
 ---
 
@@ -73,11 +73,11 @@ flowchart LR
 
 <!-- ![Checklist editor](docs/images/checklist-editor.png) -->
 
-**Prompt caching that accounts for its own cost.** Many sub-agents read the same filing section, so each Bedrock call is split around an explicit `cachePoint`: the section excerpt forms a byte-identical cached prefix, and only the question and sub-agent directions sit past it. The first sub-agent to touch a block writes the cache; the rest read it back. Critically, caching is disabled when only one sub-agent will read a given block — a cache write costs 1.25x normal input tokens, which is pure waste if nothing reads it. Cache hits and writes are logged per block so the behavior is observable in production, not assumed.
+**Prompt caching that accounts for its own cost.** Many sub-agents read the same filing section, so each Claude call is split around an explicit `cache_control` breakpoint: the section excerpt forms a byte-identical cached prefix, and only the question and sub-agent directions sit past it. The first sub-agent to touch a block writes the cache; the rest read it back. Critically, caching is disabled when only one sub-agent will read a given block — a cache write costs 1.25x normal input tokens, which is pure waste if nothing reads it. Cache hits and writes are logged per block so the behavior is observable in production, not assumed.
 
 **Evidence is the result.** There's no aggregation step: the sub-agents' findings are stored as-is and read back by question, so the UI and the review agent see exactly what was extracted, not a model's summary of it. A run can be scoped to the whole checklist, one category, or one question, and a question can be limited to the latest filing.
 
-**Concurrency with failure isolation.** Bedrock fan-out is capped by a semaphore, and the asyncio thread pool is explicitly resized — the default (`min(32, cpu_count + 4)`) caps a 2-vCPU instance below the worker count, and these threads are all I/O-wait, so the ceiling is artificial. A single sub-agent call failing (unparseable JSON after retries, say) is logged and skipped: that sub-agent ends up with less evidence, instead of the whole run aborting.
+**Concurrency with failure isolation.** LLM fan-out is capped by a semaphore, and the asyncio thread pool is explicitly resized — the default (`min(32, cpu_count + 4)`) caps a 2-vCPU instance below the worker count, and these threads are all I/O-wait, so the ceiling is artificial. A single sub-agent call failing (unparseable JSON after retries, say) is logged and skipped: that sub-agent ends up with less evidence, instead of the whole run aborting.
 
 **Grounded Q&A over the filings.** The review pipeline gives a LangChain agent two tools: `read_section` for any cached filing section, and `get_evidence` for the stored checklist evidence (fetched from the analysis pipeline, so version filtering isn't duplicated). Sections the user @-mentions are injected in full, and a manifest of what's cached is in the system prompt, so answers come from the actual filing text.
 
@@ -95,7 +95,7 @@ flowchart LR
 | --- | --- | --- |
 | **Go** | Orchestrator | Routing and SSE proxying — the hot path that isn't LLM-bound |
 | **Python + FastAPI** | Both pipelines | Async I/O fan-out, and where the LLM ecosystem lives |
-| **AWS Bedrock** (Claude Haiku 4.5) | Evidence extraction, Q&A | Managed inference with prompt caching and IAM-native auth |
+| **Anthropic API** (Claude Haiku 5.5) | Evidence extraction, Q&A | Direct SDK access with prompt caching and OAuth-profile auth |
 | **LangChain** | Review pipeline | Agent loop with tool calling over filings and evidence |
 | **edgartools** | Document retrieval | Section-level parsing of EDGAR HTML filings |
 | **DynamoDB** | Checklist, evidence, sessions | Composite-key access patterns; no relational needs |

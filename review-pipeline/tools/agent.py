@@ -2,16 +2,16 @@
 import json
 from typing import Awaitable, Callable, Optional
 
-from langchain_aws import ChatBedrock
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessageChunk
 from langchain_core.tools import tool
 from filings.manifest import filings_manifest
 from filings.read_section import read_section as fetch_section
 from utils import analysis_client
+from utils.llm import chat_model
 
 def _text_of(content) -> str:
-    # Bedrock content is a str or a list of {"type": "text", "text": ...} blocks.
+    # Content is a str or a list of blocks; keep only the {"type": "text", "text": ...} ones (drops thinking).
     if isinstance(content, str):
         return content
     return "".join(b.get("text", "") for b in content if isinstance(b, dict) and b.get("type") == "text")
@@ -59,9 +59,8 @@ async def run_agent(
             return f"could not fetch filings: {result.get('detail')}"
         return filings_manifest(tckr, start_year, end_year) or "(no sections found after fetching)"
 
-    llm = ChatBedrock(model_id="us.anthropic.claude-haiku-4-5-20251001-v1:0", region_name="us-east-2", max_tokens=4096, streaming=True)
     agent = create_agent(
-        model=llm,
+        model=chat_model(),
         tools=[read_section, get_evidence, fetch_filings],
         system_prompt=(
             f"You answer questions about {tckr}'s SEC filings ({start_year}-{end_year}).\n\n"

@@ -28,7 +28,7 @@ def create_app():
 
     # asyncio.to_thread's default executor is sized min(32, cpu_count + 4), which
     # on a small instance (e.g. 2 vCPUs) caps us at 6 — below the evidence
-    # run's MAX_WORKERS=8. These threads are all I/O-wait (Bedrock/S3/Dynamo), so a
+    # run's MAX_WORKERS=8. These threads are all I/O-wait (Anthropic/S3/Dynamo), so a
     # bigger pool doesn't compete for CPU; it just removes an artificial ceiling.
     @app.on_event("startup")
     async def _size_thread_pool():

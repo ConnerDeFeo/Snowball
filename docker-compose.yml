@@ -6,11 +6,19 @@ services:
     environment:
       - AWS_DEFAULT_REGION=us-east-2
       - ANALYSIS_PIPELINE_URL=http://analysis-pipeline:8000
+      - ANTHROPIC_CONFIG_DIR=/root/.anthropic
     volumes:
       - ~/.aws:/root/.aws:ro
+      - ~/AppData/Roaming/Anthropic:/root/.anthropic-host:ro
+    # The SDK rejects config/credential files that are group/world-accessible, and Windows
+    # bind mounts always show as 0777. So copy the profile in with tight permissions first.
+    command: >
+      sh -c "mkdir -p /root/.anthropic &&
+      cp -r /root/.anthropic-host/. /root/.anthropic/ &&
+      chmod -R go-rwx /root/.anthropic &&
+      exec gunicorn -w 4 -k uvicorn.workers.UvicornWorker --timeout 300 -b 0.0.0.0:8000 app:app"
     depends_on:
       - analysis-pipeline
-      - ~/AppData/Roaming/Anthropic:/root/.anthropic 
   analysis-pipeline:
     build:
       context: ./analysis-pipeline
@@ -19,9 +27,16 @@ services:
       - EDGAR_IDENTITY
     environment:
       - AWS_DEFAULT_REGION=us-east-2
+      - ANTHROPIC_CONFIG_DIR=/root/.anthropic
     volumes:
       - ~/.aws:/root/.aws:ro
-      - ~/AppData/Roaming/Anthropic:/root/.anthropic 
+      - ~/AppData/Roaming/Anthropic:/root/.anthropic-host:ro
+    # Same permission workaround as review-pipeline. entrypoint.sh still runs first and execs this.
+    command: >
+      sh -c "mkdir -p /root/.anthropic &&
+      cp -r /root/.anthropic-host/. /root/.anthropic/ &&
+      chmod -R go-rwx /root/.anthropic &&
+      exec gunicorn -w 4 -k uvicorn.workers.UvicornWorker --timeout 300 -b 0.0.0.0:8000 app:app"
 
   orchestrator:
     build:

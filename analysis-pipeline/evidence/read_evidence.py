@@ -4,10 +4,10 @@ from checklist import load
 from evidence import assemble, evidence_cache
 from evidence.plan_work import sort_key
 from evidence.types import EvidenceResponse
-from utils import bedrock
+from utils import llm
 from utils.dynamo import evidence_table
 
-# Reads already-stored evidence without calling Bedrock. Only evidence produced
+# Reads already-stored evidence without calling the LLM. Only evidence produced
 # under the current prompt + model versions counts, so an edited question
 # shows no evidence until it is re-run.
 def read_evidence(tckr: str, start_year: int, end_year: int, category_id: str | None = None, question_id: str | None = None) -> list[dict]:
@@ -24,7 +24,7 @@ def read_evidence(tckr: str, start_year: int, end_year: int, category_id: str | 
         for item in items:
             # key: qid#year#form#quarter#version#model
             _, _, _, _, version, model = item["evidence_key"].split("#")
-            if model != bedrock.MODEL_ID or version != evidence_cache.version_tag(q):
+            if model != llm.MODEL_ID or version != evidence_cache.version_tag(q):
                 continue
             if start_year <= int(item["year"]) <= end_year:
                 kept.append(item)
