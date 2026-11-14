@@ -5,10 +5,11 @@ from typing import Awaitable, Callable, Optional
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessageChunk
 from langchain_core.tools import tool
+from filings.grep_filing import grep_filing
 from filings.manifest import filings_manifest
 from filings.read_section import read_section as fetch_section
 from utils import analysis_client
-from utils.llm import chat_model
+from utils.llm import DEFAULT_MODEL, chat_model
 
 def _text_of(content) -> str:
     # Content is a str or a list of blocks; keep only the {"type": "text", "text": ...} ones (drops thinking).
@@ -26,6 +27,7 @@ async def run_agent(
     history: Optional[list[dict]] = None,
     # Callable function that takes dict param and returns awaitable nothing
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
+    model: str = DEFAULT_MODEL,
 ) -> tuple[str, list[dict]]:
 
     # Agent reads the docstring
@@ -36,6 +38,16 @@ async def run_agent(
         string for a 10-K (the manifest shows FY)."""
         text = fetch_section(tckr, form, year, quarter or None, section)
         return text if text is not None else "section not found"
+
+    @tool
+    def grep_filing_tool(form: str, year: str, quarter: str, pattern: str) -> str:
+        """Regex-search (case-insensitive) every section of one filing at once. Use form,
+        year and quarter exactly as in the filings manifest (quarter is an empty string
+        for a 10-K). Returns matches with surrounding context, each labeled with the
+        section it came from. Use this to find WHERE something is mentioned, then
+        read_section to read that section."""
+        result = grep_filing(tckr, form, year, quarter or None, pattern)
+        return result if result is not None else "filing not found (it may need to be re-fetched)"
 
     @tool
     def get_evidence(question_id: str) -> str:
@@ -60,8 +72,8 @@ async def run_agent(
         return filings_manifest(tckr, start_year, end_year) or "(no sections found after fetching)"
 
     agent = create_agent(
-        model=chat_model(),
-        tools=[read_section, get_evidence, fetch_filings],
+        model=chat_model(model),
+        tools=[read_section, grep_filing_tool, get_evidence, fetch_filings],
         system_prompt=(
             f"You answer questions about {tckr}'s SEC filings ({start_year}-{end_year}).\n\n"
             f"Sections the user mentioned (full text, may be empty):\n{mentions_text or '(none)'}\n\n"
@@ -69,6 +81,8 @@ async def run_agent(
             f"Checklist questions ([id] text):\n{checklist_manifest_text}\n\n"
             "Answer from the mentioned sections first. Call read_section to read any other "
             "section in the filings manifest (use year/form/period/section exactly as written there). "
+            "If you don't know which section mentions something, call grep_filing_tool to regex-search a whole "
+            "filing, then read_section on the section it points to. "
             "Call get_evidence for the evidence behind a checklist question. "
             "If the filings manifest is empty, call fetch_filings before answering. "
             "Cite the form, year and section you relied on."

@@ -1,5 +1,6 @@
 # routes/review.py
 import asyncio
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import APIRouter
@@ -26,6 +27,7 @@ class ReviewRequest(BaseModel):
     user_text: str
     session_id: str | None = None
     mentions: list[Mention] = []
+    model: Literal["claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"] = "claude-haiku-5-5"
 
 
 @router.post("/review/{tckr}")
@@ -45,7 +47,7 @@ async def review(tckr:str, req: ReviewRequest):
     async def job(on_progress):
         answer, updated_history = await run_agent(
             tckr, start_year, end_year, mentions_text, filings_text, checklist_text, user_text,
-            history=history, on_progress=on_progress,
+            history=history, on_progress=on_progress, model=req.model,
         )
         review_sessions_table.save_history(session_id, updated_history)
         return {"type": "result", "answer": answer, "session_id": session_id}
