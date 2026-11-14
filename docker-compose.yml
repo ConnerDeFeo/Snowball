@@ -10,6 +10,7 @@ services:
       - ~/.aws:/root/.aws:ro
     depends_on:
       - analysis-pipeline
+      - ~/AppData/Roaming/Anthropic:/root/.anthropic 
   analysis-pipeline:
     build:
       context: ./analysis-pipeline
@@ -20,6 +21,7 @@ services:
       - AWS_DEFAULT_REGION=us-east-2
     volumes:
       - ~/.aws:/root/.aws:ro
+      - ~/AppData/Roaming/Anthropic:/root/.anthropic 
 
   orchestrator:
     build:
