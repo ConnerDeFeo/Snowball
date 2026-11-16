@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 import threading
-import time
 from typing import Awaitable, Callable, Optional
 from document_retrieval.FetchDocuments import FetchDocuments
 from enums.FormType import FormType
@@ -18,9 +17,6 @@ logger = logging.getLogger(__name__)
 # Bounded to stay comfortably under SEC EDGAR's ~10 req/s fair-access guidance
 # while still overlapping the many per-filing downloads for a wide date range.
 MAX_FETCH_WORKERS = 8
-# Each worker slot is held at least this long, so fast filings (Form 4s)
-# can't push us past SEC's ~10 req/s limit.
-MIN_FILING_SECONDS = 1
 
 
 def _period_key(report) -> str:
@@ -205,10 +201,8 @@ async def get_documents(
             await asyncio.to_thread(documents_table.put, accession, status="processing")
             # Await semephore lock
             async with sem:
-                # Complete task, holding the slot for at least MIN_FILING_SECONDS
-                started = time.monotonic()
+                # Complete task
                 await asyncio.to_thread(fn, tckr, filing)
-                await asyncio.sleep(max(0, MIN_FILING_SECONDS - (time.monotonic() - started)))
             await asyncio.to_thread(documents_table.put, accession, status="processed")
         # If update progress function given, update client
         if on_progress:
