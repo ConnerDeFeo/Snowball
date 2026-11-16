@@ -22,11 +22,11 @@ function YearRangePicker({ range, onChange }: YearRangePickerProps) {
 
   return (
     <div className="flex items-center gap-1.5">
-      <div className="w-20">
+      <div className="w-24">
         <Select compact value={String(start)} onChange={(v) => update(Number(v), end)} options={options} />
       </div>
       <span className="text-slate-400">–</span>
-      <div className="w-20">
+      <div className="w-24">
         <Select compact value={String(end)} onChange={(v) => update(start, Number(v))} options={options} />
       </div>
       {!valid && <p className="ml-2 text-xs text-rose-600">1–6 years, start ≤ end</p>}

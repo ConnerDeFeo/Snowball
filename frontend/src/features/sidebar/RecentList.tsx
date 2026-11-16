@@ -7,7 +7,7 @@ function RecentList() {
   if (loading || recents.length === 0) return null
 
   return (
-    <div>
+    <div className="pr-4">
       <p className="mb-1 px-3 text-xs font-semibold tracking-wide text-slate-400 uppercase">Recent</p>
       <ul className="flex flex-col">
         {recents.map((r) => (

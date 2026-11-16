@@ -1,7 +1,7 @@
 interface ButtonProps {
   children: React.ReactNode
   variant?: 'primary' | 'ghost' | 'subtle'
-  size?: 'md' | 'sm'
+  size?: 'md' | 'sm' | 'xs'
   type?: 'button' | 'submit'
   onClick?: () => void
   disabled?: boolean
@@ -17,6 +17,7 @@ const styles = {
 const sizes = {
   md: 'px-5 py-2.5',
   sm: 'px-3 py-1.5 text-sm',
+  xs: 'px-2 py-1 text-xs',
 }
 
 function Button({ children, variant = 'primary', size = 'md', type = 'button', onClick, disabled, title }: ButtonProps) {

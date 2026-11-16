@@ -14,7 +14,7 @@ function EditorControls() {
   }
 
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex flex-col gap-2 pr-4">
       <h1 className="px-3 text-2xl font-bold text-slate-800">{last.ticker}</h1>
       <ViewNav value={null} onChange={go} />
     </section>

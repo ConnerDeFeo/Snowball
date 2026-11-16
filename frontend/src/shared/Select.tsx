@@ -18,7 +18,7 @@ function Select({ value, onChange, options, disabled, compact }: SelectProps) {
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
       className={`w-full rounded-lg border border-secondary-ice bg-primary text-slate-800 focus:border-secondary focus:ring-2 focus:ring-secondary/50 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-        compact ? 'p-1 text-xs' : 'px-4 py-2.5'
+        compact ? 'p-1 tx-sm' : 'px-4 py-2.5'
       }`}
     >
       {options.map((opt) => (
