@@ -6,6 +6,7 @@ services:
     environment:
       - AWS_DEFAULT_REGION=us-east-2
       - ANALYSIS_PIPELINE_URL=http://analysis-pipeline:8000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     depends_on:
       - analysis-pipeline
   analysis-pipeline:
@@ -15,6 +16,7 @@ services:
       - EDGAR_IDENTITY
     environment:
       - AWS_DEFAULT_REGION=us-east-2
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
   orchestrator:
     image: 857360184083.dkr.ecr.us-east-2.amazonaws.com/snowball/orchestrator:bd0f9ad
     restart: unless-stopped
