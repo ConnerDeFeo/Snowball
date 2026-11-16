@@ -109,7 +109,7 @@ function Company() {
       onViewChange={setView}
       checklistCount={total > 0 ? `${answered}/${total}` : ''}
       onFetchFilings={() => start({ kind: 'documents-only' })}
-      fetching={active}
+      runState={state}
     />
   )
 
