@@ -1,7 +1,7 @@
 from edgar import Company, set_identity, CompanyNotFoundError
 from dotenv import load_dotenv
 import os
-from enums.FormType import FormType
+from enums.FormType import FormType, INSIDER_FORMS
 
 # Set identity for EDGAR db
 load_dotenv()
@@ -77,5 +77,12 @@ class FetchDocuments:
     # 8-K Retrieval (Filing objects; stored as markdown, so no .obj() parse here)
     def fetch_multiple_8k(self, start_year: int, end_year: int):
         filings = self.company.get_filings(form=FormType.EIGHT_K.value).filter(date=f"{start_year}-01-01:{end_year}-12-31")
+
+        return list(filings)
+
+    # Insider / ownership filings: Form 4 and 13D (old "SC" and new "SCHEDULE" names)
+    def fetch_multiple_insiders(self, start_year: int, end_year: int):
+        forms = [f.value for f in INSIDER_FORMS]
+        filings = self.company.get_filings(form=forms).filter(date=f"{start_year}-01-01:{end_year}-12-31")
 
         return list(filings)

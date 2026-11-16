@@ -6,6 +6,7 @@ import ChecklistView from '../features/company/ChecklistView';
 import RunBanner from '../features/company/RunBanner';
 import FinancialsView from '../features/financials/FinancialsView';
 import EventsView from '../features/events/EventsView';
+import InsidersView from '../features/insiders/InsidersView';
 import ChatView from '../features/company/subfeatures/chat/ChatView';
 import { mergeEvidence } from '../features/company/mergeEvidence';
 import { countAnswered } from '../features/company/evidenceStats';
@@ -19,6 +20,7 @@ import { useEvidenceRun } from '../hooks/useEvidenceRun';
 import { useEvidence } from '../hooks/useEvidence';
 import { useFinancials } from '../hooks/useFinancials';
 import { useEvents } from '../hooks/useEvents';
+import { useInsiders } from '../hooks/useInsiders';
 import { recordRecent } from '../hooks/useRecents';
 import type { EvidenceCategory } from '../services/types/EvidenceTypes';
 
@@ -34,6 +36,7 @@ function Company() {
   const { serverEvidence, error, loading, refresh } = useEvidence(tckr, range)
   const financials = useFinancials(tckr, range)
   const events = useEvents(tckr, range)
+  const insiders = useInsiders(tckr, range)
 
   const onResult = useCallback(
     (categories: EvidenceCategory[]) => setSessionEvidence((prev) => [...prev, ...categories]),
@@ -51,12 +54,14 @@ function Company() {
   // A finished run may have just downloaded new filings, so reload their statements and events.
   const { refresh: refreshFinancials } = financials
   const { refresh: refreshEvents } = events
+  const { refresh: refreshInsiders } = insiders
   useEffect(() => {
     if (state.phase === 'done') {
       refreshFinancials()
       refreshEvents()
+      refreshInsiders()
     }
-  }, [state.phase, refreshFinancials, refreshEvents])
+  }, [state.phase, refreshFinancials, refreshEvents, refreshInsiders])
 
   // Opening Financials with nothing cached fetches the filings automatically.
   useAutoFetchFilings({
@@ -71,6 +76,15 @@ function Company() {
   useAutoFetchFilings({
     enabled: view === 'events',
     empty: !events.loading && !events.error && events.events.length === 0,
+    busy: state.phase === 'fetching-docs' || state.phase === 'running',
+    fetch: () => start({ kind: 'documents-only' }),
+    key: `${tckr}:${range.start}-${range.end}`,
+  })
+
+  // And for Insiders: nothing cached means Form 4 and 13D filings haven't been fetched yet.
+  useAutoFetchFilings({
+    enabled: view === 'insiders',
+    empty: !insiders.loading && !insiders.error && insiders.filings.length === 0,
     busy: state.phase === 'fetching-docs' || state.phase === 'running',
     fetch: () => start({ kind: 'documents-only' }),
     key: `${tckr}:${range.start}-${range.end}`,
@@ -127,6 +141,21 @@ function Company() {
             loading={financials.loading}
             error={financials.error}
             onRetry={financials.refresh}
+            fetching={active}
+          />
+        </div>
+      )}
+      {view === 'insiders' && (
+        <div className="h-full overflow-y-auto p-6">
+          <div className="mb-4">
+            <RunBanner state={state} />
+          </div>
+          <InsidersView
+            tckr={tckr}
+            filings={insiders.filings}
+            loading={insiders.loading}
+            error={insiders.error}
+            onRetry={insiders.refresh}
             fetching={active}
           />
         </div>

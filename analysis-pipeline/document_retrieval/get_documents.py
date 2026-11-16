@@ -8,6 +8,7 @@ from enums.FormType import FormType
 from document_retrieval.ProxyData import build_proxy_data
 from document_retrieval.financial_statements import build_statements
 from document_retrieval.store_8k import store_8k
+from document_retrieval.store_insider import store_insider
 from utils.s3 import store
 from utils.dynamo import documents_table
 
@@ -116,6 +117,14 @@ def _process_8k(tckr: str, filing):
     logger.info("[%s] DONE   8-K   %s  filed %s", thread_name, tckr, filing.filing_date)
 
 
+def _process_insider(tckr: str, filing):
+    """Download then store a single Form 4 or 13D as markdown. Runs in a worker thread."""
+    thread_name = threading.current_thread().name
+    logger.info("[%s] START  %s  %s  filed %s", thread_name, filing.form, tckr, filing.filing_date)
+    store_insider(tckr, filing)
+    logger.info("[%s] DONE   %s  %s  filed %s", thread_name, filing.form, tckr, filing.filing_date)
+
+
 async def get_documents(
     tckr: str,
     start_year: int,
@@ -134,6 +143,7 @@ async def get_documents(
       filings/<tckr>/10-Q/<year>/Q<n>/<section>.txt (+ sections.json, statements.json)
       filings/<tckr>/DEF 14A/<year>/proxy.txt
       filings/<tckr>/8-K/<filing_date>_<accession>/event.md (+ meta.json)
+      filings/<tckr>/insiders/<filing_date>_<accession>/doc.md (+ meta.json)  (Form 4, 13D)
 
     If `on_progress` is given, it's awaited with a "start" event before any
     downloads begin and a "progress" event after each filing completes —
@@ -152,12 +162,14 @@ async def get_documents(
     tenq_filings = fetcher.fetch_multiple_10q(start_year, end_year)
     proxy_filings = fetcher.fetch_multiple_proxy(start_year, end_year)
     eightk_filings = fetcher.fetch_multiple_8k(start_year, end_year)
+    insider_filings = fetcher.fetch_multiple_insiders(start_year, end_year)
 
     counts = {
         FormType.TEN_K.value: len(tenk_filings),
         FormType.TEN_Q.value: len(tenq_filings),
         FormType.PROXY.value: len(proxy_filings),
         FormType.EIGHT_K.value: len(eightk_filings),
+        "Insiders": len(insider_filings),
     }
     total = sum(counts.values())
     logger.info(
@@ -202,6 +214,7 @@ async def get_documents(
     tasks += [_run(_process_10q, f, FormType.TEN_Q.value) for f in tenq_filings]
     tasks += [_run(_process_proxy, f, FormType.PROXY.value) for f in proxy_filings]
     tasks += [_run(_process_8k, f, FormType.EIGHT_K.value) for f in eightk_filings]
+    tasks += [_run(_process_insider, f, f.form) for f in insider_filings]
 
     await asyncio.gather(*tasks)  # re-raises first failure
 
