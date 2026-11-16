@@ -8,6 +8,25 @@ load_dotenv()
 identity = os.environ.get("EDGAR_IDENTITY")
 set_identity(identity)
 
+# TEMPORARY DEBUG: log what SEC actually returned when edgartools raises
+# "SEC returned HTML or XML content instead of expected SGML". Remove once diagnosed.
+import logging
+from edgar.sgml import sgml_parser
+
+_orig_raise_html_error = sgml_parser._raise_sec_html_error
+
+def _logged_raise_html_error(content):
+    import re
+    title = re.search(r"<title>(.*?)</title>", content, re.S | re.I)
+    body = re.sub(r"<(script|style).*?</\1>", " ", content, flags=re.S | re.I)
+    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", body)).strip()
+    logging.getLogger(__name__).error(
+        "SEC HTML response: len=%d title=%r text=%r", len(content), title and title.group(1).strip(), text[:500]
+    )
+    _orig_raise_html_error(content)
+
+sgml_parser._raise_sec_html_error = _logged_raise_html_error
+
 class FetchDocuments:
     def __init__(self, company: Company):
         self.company = company

@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 STATEMENTS = {
     "income": "income_statement",
     "balance": "balance_sheet",
-    "cashflow": "cashflow_statement",
+    "cashflow": "cash_flow_statement",
 }
 
 # Period columns are named by their end date, e.g. "2024-09-28 (FY)"; every

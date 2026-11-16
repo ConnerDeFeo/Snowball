@@ -3,6 +3,7 @@ import json
 import logging
 import threading
 from typing import Awaitable, Callable, Optional
+from edgar.sgml.sgml_parser import SECHTMLResponseError
 from document_retrieval.FetchDocuments import FetchDocuments
 from enums.FormType import FormType
 from document_retrieval.ProxyData import build_proxy_data
@@ -17,6 +18,10 @@ logger = logging.getLogger(__name__)
 # Bounded to stay comfortably under SEC EDGAR's ~10 req/s fair-access guidance
 # while still overlapping the many per-filing downloads for a wide date range.
 MAX_FETCH_WORKERS = 8
+
+# SEC sometimes returns a transient "File Unavailable" page instead of the filing.
+FETCH_ATTEMPTS = 3
+RETRY_DELAY_SECONDS = 2
 
 
 def _period_key(report) -> str:
@@ -201,8 +206,19 @@ async def get_documents(
             await asyncio.to_thread(documents_table.put, accession, status="processing")
             # Await semephore lock
             async with sem:
-                # Complete task
-                await asyncio.to_thread(fn, tckr, filing)
+                # Complete task, retrying when SEC serves its transient "File Unavailable" page
+                for attempt in range(1, FETCH_ATTEMPTS + 1):
+                    try:
+                        await asyncio.to_thread(fn, tckr, filing)
+                        break
+                    except SECHTMLResponseError:
+                        if attempt == FETCH_ATTEMPTS:
+                            raise
+                        logger.warning(
+                            "[retry] %s %s %s attempt %d failed, SEC returned HTML; retrying",
+                            form, tckr, accession, attempt,
+                        )
+                        await asyncio.sleep(RETRY_DELAY_SECONDS * attempt)  # 2s, then 4s
             await asyncio.to_thread(documents_table.put, accession, status="processed")
         # If update progress function given, update client
         if on_progress:
