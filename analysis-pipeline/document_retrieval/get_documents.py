@@ -26,7 +26,13 @@ MIN_FILING_SECONDS = 1
 def _period_key(report) -> str:
     """Best-effort period string (YYYY-MM-DD) for a filing/report, falling
     back to filing_date when period_of_report is unavailable."""
-    period = report.period_of_report or report.filing_date
+    try:
+        period = report.period_of_report
+    except TypeError:
+        # edgartools raises (instead of returning None) when the filing index
+        # page has no dates, e.g. some DEF 14A proxies.
+        period = None
+    period = period or report.filing_date
     if hasattr(period, "isoformat"):
         return period.isoformat()
     return str(period)
