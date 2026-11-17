@@ -35,6 +35,7 @@ export function useChat({ tckr, range, model, effort }: UseChatOptions) {
   const [live, setLive] = useState<ChatPart[]>([])
   const liveRef = useRef<ChatPart[]>([]) // latest live parts, readable from the stream callback
   const [busy, setBusy] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
 
   const updateLive = useCallback((next: ChatPart[]) => {
     liveRef.current = next
@@ -67,6 +68,9 @@ export function useChat({ tckr, range, model, effort }: UseChatOptions) {
         updateLive([])
       }
 
+      const controller = new AbortController()
+      abortRef.current = controller
+
       try {
         await ReviewService.streamReview(tckr, {
           start_year: range.start,
@@ -94,7 +98,10 @@ export function useChat({ tckr, range, model, effort }: UseChatOptions) {
           } else if (frame.type === 'error') {
             commit('', { role: 'assistant', text: frame.detail, isError: true })
           }
-        })
+        }, controller.signal)
+        if (controller.signal.aborted) {
+          commit('', { role: 'assistant', text: 'Stopped.', isError: true })
+        }
       } catch (err) {
         const detail = err instanceof ApiError ? err.detail : 'Failed to reach the review agent'
         commit('', { role: 'assistant', text: detail, isError: true })
@@ -105,11 +112,13 @@ export function useChat({ tckr, range, model, effort }: UseChatOptions) {
     [tckr, range.start, range.end, model, effort, updateLive],
   )
 
+  const stop = useCallback(() => abortRef.current?.abort(), [])
+
   const reset = useCallback(() => {
     sessionStorage.removeItem(reviewSessionKey(tckr, range.start, range.end))
     setMessages([])
     updateLive([])
   }, [tckr, range.start, range.end, updateLive])
 
-  return { messages, live, busy, send, reset }
+  return { messages, live, busy, send, stop, reset }
 }

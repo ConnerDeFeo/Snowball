@@ -12,6 +12,7 @@ interface ChatComposerProps {
   busy: boolean
   range: YearRange
   onSend: (text: string, mentions: Mention[]) => void
+  onStop: () => void
   inputRef: React.RefObject<HTMLTextAreaElement | null>
   model: ChatModel
   onModelChange: (model: ChatModel) => void
@@ -20,7 +21,7 @@ interface ChatComposerProps {
   onNewChat?: () => void // omitted when there is nothing to reset
 }
 
-function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange, effort, onEffortChange, onNewChat }: ChatComposerProps) {
+function ChatComposer({ busy, range, onSend, onStop, inputRef, model, onModelChange, effort, onEffortChange, onNewChat }: ChatComposerProps) {
   const [text, setText] = useState('')
   const [mentions, setMentions] = useState<Mention[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -102,12 +103,12 @@ function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange, eff
             @
           </button>
           <button
-            onClick={submit}
-            disabled={busy || !text.trim()}
-            title="Send"
+            onClick={busy ? onStop : submit}
+            disabled={!busy && !text.trim()}
+            title={busy ? 'Stop' : 'Send'}
             className="h-8 w-8 cursor-pointer rounded-full bg-secondary text-white hover:bg-secondary-deep disabled:cursor-not-allowed disabled:opacity-40"
           >
-            ↑
+            {busy ? '■' : '↑'}
           </button>
         </div>
       </div>

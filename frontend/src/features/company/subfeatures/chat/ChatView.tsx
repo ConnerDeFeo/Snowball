@@ -29,6 +29,7 @@ function ChatView({ tckr, range, chat, inputRef, model, onModelChange, effort, o
         busy={chat.busy}
         range={range}
         onSend={chat.send}
+        onStop={chat.stop}
         inputRef={inputRef}
         model={model}
         onModelChange={onModelChange}

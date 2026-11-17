@@ -5,6 +5,7 @@ from typing import Awaitable, Callable, Optional
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessageChunk
 from langchain_core.tools import tool
+from filings.eight_k import eight_k_list, read_8k as fetch_8k
 from filings.grep_filing import grep_filing
 from filings.manifest import filings_manifest
 from filings.read_section import read_section as fetch_section
@@ -61,8 +62,27 @@ async def run_agent(
             return f"could not fetch evidence: {e}"
 
     @tool
+    def list_8k_filings() -> str:
+        """List this company's 8-K current reports in the year range, newest first: id,
+        filing date, event date, and the 8-K items (what each filing is about, e.g.
+        earnings results, officer changes, acquisitions). Pass an id to read_8k."""
+        try:
+            return eight_k_list(tckr, start_year, end_year)
+        except Exception as e:
+            return f"could not list 8-Ks: {e}"
+
+    @tool
+    def read_8k(event_id: str) -> str:
+        """Read the full text of one 8-K (primary document plus exhibits such as the
+        press release). Use the id exactly as shown by list_8k_filings."""
+        try:
+            return fetch_8k(tckr, event_id)
+        except Exception as e:
+            return f"could not read 8-K: {e}"
+
+    @tool
     def fetch_filings() -> str:
-        """Download this company's 10-K/10-Q/proxy filings for the year range from SEC EDGAR.
+        """Download this company's 10-K/10-Q/proxy/8-K filings for the year range from SEC EDGAR.
         Call this first if the filings manifest is empty. Returns the updated manifest."""
         try:
             result = analysis_client.fetch_documents(tckr, start_year, end_year)
@@ -74,7 +94,7 @@ async def run_agent(
 
     agent = create_agent(
         model=chat_model(model, effort),
-        tools=[read_section, grep_filing_tool, get_evidence, fetch_filings],
+        tools=[read_section, grep_filing_tool, get_evidence, list_8k_filings, read_8k, fetch_filings],
         system_prompt=(
             f"You answer questions about {tckr}'s SEC filings ({start_year}-{end_year}).\n\n"
             f"Sections the user mentioned (full text, may be empty):\n{mentions_text or '(none)'}\n\n"
@@ -85,6 +105,8 @@ async def run_agent(
             "If you don't know which section mentions something, call grep_filing_tool to regex-search a whole "
             "filing, then read_section on the section it points to. "
             "Call get_evidence for the evidence behind a checklist question. "
+            "For material events (earnings releases, executive changes, acquisitions, etc.) call "
+            "list_8k_filings to browse the 8-Ks, then read_8k on the relevant ones. "
             "If the filings manifest is empty, call fetch_filings before answering. "
             "Cite the form, year and section you relied on."
         ),

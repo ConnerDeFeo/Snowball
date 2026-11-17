@@ -19,6 +19,12 @@ def get_checklist() -> list[dict]:
 def get_evidence(tckr: str, start_year: int, end_year: int, question_id: str) -> list[dict]:
     return _get(f"/evidence/{tckr}", {"start_year": start_year, "end_year": end_year, "question_id": question_id})
 
+def list_events(tckr: str, start_year: int, end_year: int) -> list[dict]:
+    return _get(f"/events/{tckr}", {"start_year": start_year, "end_year": end_year})
+
+def get_event(tckr: str, event_id: str) -> dict:
+    return _get(f"/events/{tckr}/{urllib.parse.quote(event_id)}")
+
 # Runs the analysis pipeline's document fetch (an SSE stream) to completion and returns
 # its last frame: {"type": "done"} or {"type": "error", "detail": ...}. Progress frames
 # arrive after each filing, so the timeout only trips if the stream stalls.
