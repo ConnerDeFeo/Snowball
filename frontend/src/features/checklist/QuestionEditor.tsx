@@ -44,7 +44,6 @@ function QuestionEditor({ categoryId, existing, nextOrder, onDone, onCancel }: Q
       } else {
         await ChecklistService.createQuestion(categoryId, { text: text.trim(), form, section, order: nextOrder, latest_only: latestOnly })
       }
-      showToast({ kind: 'info', message: 'Question saved' })
       onDone()
     } catch (err) {
       showToast({ kind: 'error', message: err instanceof ApiError ? err.detail : 'Failed to save question' })

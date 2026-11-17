@@ -26,7 +26,6 @@ function QuestionItem({ categoryId, question, onChanged }: QuestionItemProps) {
     }
     try {
       await ChecklistService.deleteQuestion(categoryId, question.id)
-      showToast({ kind: 'info', message: 'Question removed' })
       onChanged()
     } catch (err) {
       showToast({ kind: 'error', message: err instanceof ApiError ? err.detail : 'Failed to delete question' })

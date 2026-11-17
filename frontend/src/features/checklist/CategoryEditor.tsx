@@ -39,7 +39,6 @@ function CategoryEditor({ categoryId, checklist }: CategoryEditorProps) {
     setBusy(true)
     try {
       await ChecklistService.patchCategory(category!.id, { name: name.trim() })
-      showToast({ kind: 'info', message: 'Category saved' })
       await checklist.refresh()
     } catch (err) {
       showToast({ kind: 'error', message: err instanceof ApiError ? err.detail : 'Failed to save category' })
@@ -57,7 +56,6 @@ function CategoryEditor({ categoryId, checklist }: CategoryEditorProps) {
     setBusy(true)
     try {
       await ChecklistService.deleteCategory(category!.id)
-      showToast({ kind: 'info', message: `Deleted ${category!.name}` })
       await checklist.refresh()
       select(null)
     } catch (err) {
