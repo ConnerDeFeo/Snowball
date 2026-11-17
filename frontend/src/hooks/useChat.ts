@@ -46,6 +46,8 @@ export function useChat({ tckr, range, model, effort }: UseChatOptions) {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the transcript when ticker/range changes
     setMessages([])
     updateLive([])
+    // The blank transcript means a fresh chat: drop the stored session (also runs on page load).
+    sessionStorage.removeItem(reviewSessionKey(tckr, range.start, range.end))
   }, [tckr, range.start, range.end, updateLive])
 
   const send = useCallback(
