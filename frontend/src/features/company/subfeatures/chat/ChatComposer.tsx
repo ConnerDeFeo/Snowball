@@ -56,7 +56,7 @@ function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange, eff
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-3xl p-3 pb-2">
+    <div className="relative mx-auto w-full max-w-3xl p-3 pb-3">
       {pickerOpen && (
         <div className="absolute right-3 bottom-full left-3 mb-1">
           <MentionPicker range={range} onAdd={(m) => setMentions((prev) => [...prev, m])} onClose={() => setPickerOpen(false)} />
