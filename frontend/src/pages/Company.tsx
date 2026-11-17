@@ -19,6 +19,7 @@ import { useAutoFetchFilings } from '../hooks/useAutoFetchFilings';
 import { useSlashToChat } from '../hooks/useSlashToChat';
 import { useChat } from '../hooks/useChat';
 import { useChatModel } from '../hooks/useChatModel';
+import { useChatDraft } from '../hooks/useChatDraft';
 import { useEvidenceRun } from '../hooks/useEvidenceRun';
 import { useEvidence } from '../hooks/useEvidence';
 import { useFinancials } from '../hooks/useFinancials';
@@ -37,6 +38,7 @@ function Company() {
 
   const { model, setModel, effort, setEffort } = useChatModel()
   const chat = useChat({ tckr, range, model, effort })
+  const draft = useChatDraft()
   const { serverEvidence, error, loading, refresh } = useEvidence(tckr, range)
   const financials = useFinancials(tckr, range)
   const events = useEvents(tckr, range)
@@ -138,7 +140,7 @@ function Company() {
     >
       {view === EDIT_CHECKLIST_VIEW && <ChecklistEditor />}
       {view === 'chat' && (
-        <ChatView tckr={tckr} range={range} chat={chat} inputRef={inputRef} model={model} onModelChange={setModel} effort={effort} onEffortChange={setEffort} />
+        <ChatView tckr={tckr} range={range} chat={chat} draft={draft} inputRef={inputRef} model={model} onModelChange={setModel} effort={effort} onEffortChange={setEffort} />
       )}
       {view === 'checklist' && (
         <div className="h-full p-6">

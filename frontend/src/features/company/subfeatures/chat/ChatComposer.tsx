@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { useChatDraft } from '../../../../hooks/useChatDraft'
 import MentionPicker from './MentionPicker'
 import ModelPicker from './ModelPicker'
 import Button from '../../../../shared/Button'
@@ -10,6 +11,7 @@ import type { Mention } from '../../../../services/types/ReviewTypes'
 
 interface ChatComposerProps {
   busy: boolean
+  draft: ReturnType<typeof useChatDraft>
   range: YearRange
   onSend: (text: string, mentions: Mention[]) => void
   onStop: () => void
@@ -21,9 +23,8 @@ interface ChatComposerProps {
   onNewChat?: () => void // omitted when there is nothing to reset
 }
 
-function ChatComposer({ busy, range, onSend, onStop, inputRef, model, onModelChange, effort, onEffortChange, onNewChat }: ChatComposerProps) {
-  const [text, setText] = useState('')
-  const [mentions, setMentions] = useState<Mention[]>([])
+function ChatComposer({ busy, draft, range, onSend, onStop, inputRef, model, onModelChange, effort, onEffortChange, onNewChat }: ChatComposerProps) {
+  const { text, setText, mentions, setMentions } = draft
   const [pickerOpen, setPickerOpen] = useState(false)
 
   // Auto-grow the textarea up to a cap.

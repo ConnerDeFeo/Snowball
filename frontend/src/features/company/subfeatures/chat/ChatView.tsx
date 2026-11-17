@@ -1,6 +1,7 @@
 import ChatTranscript from './ChatTranscript'
 import ChatComposer from './ChatComposer'
 import type { useChat } from '../../../../hooks/useChat'
+import type { useChatDraft } from '../../../../hooks/useChatDraft'
 import type { YearRange } from '../../../../constants/yearRange'
 import type { ChatEffort, ChatModel } from '../../../../constants/chatModels'
 
@@ -8,6 +9,7 @@ interface ChatViewProps {
   tckr: string
   range: YearRange
   chat: ReturnType<typeof useChat>
+  draft: ReturnType<typeof useChatDraft>
   inputRef: React.RefObject<HTMLTextAreaElement | null>
   model: ChatModel
   onModelChange: (model: ChatModel) => void
@@ -15,7 +17,7 @@ interface ChatViewProps {
   onEffortChange: (effort: ChatEffort) => void
 }
 
-function ChatView({ tckr, range, chat, inputRef, model, onModelChange, effort, onEffortChange }: ChatViewProps) {
+function ChatView({ tckr, range, chat, draft, inputRef, model, onModelChange, effort, onEffortChange }: ChatViewProps) {
   return (
     <div className="flex h-full flex-col">
       <ChatTranscript
@@ -27,6 +29,7 @@ function ChatView({ tckr, range, chat, inputRef, model, onModelChange, effort, o
       />
       <ChatComposer
         busy={chat.busy}
+        draft={draft}
         range={range}
         onSend={chat.send}
         onStop={chat.stop}
