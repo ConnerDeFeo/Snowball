@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import MentionPicker from './MentionPicker'
 import ModelPicker from './ModelPicker'
+import Button from '../../../../shared/Button'
 import { displayMention } from '../../../../constants/categories'
+import { CHAT_DISCLOSURE } from '../../../../constants/chat'
 import type { ChatEffort, ChatModel } from '../../../../constants/chatModels'
 import type { YearRange } from '../../../../constants/yearRange'
 import type { Mention } from '../../../../services/types/ReviewTypes'
@@ -15,9 +17,10 @@ interface ChatComposerProps {
   onModelChange: (model: ChatModel) => void
   effort: ChatEffort
   onEffortChange: (effort: ChatEffort) => void
+  onNewChat?: () => void // omitted when there is nothing to reset
 }
 
-function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange, effort, onEffortChange }: ChatComposerProps) {
+function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange, effort, onEffortChange, onNewChat }: ChatComposerProps) {
   const [text, setText] = useState('')
   const [mentions, setMentions] = useState<Mention[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -63,16 +66,6 @@ function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange, eff
         </div>
       )}
 
-      <div className="mb-1.5 flex justify-end">
-        <ModelPicker
-          model={model}
-          effort={effort}
-          onModelChange={onModelChange}
-          onEffortChange={onEffortChange}
-          disabled={busy}
-        />
-      </div>
-
       <div className="rounded-2xl border border-secondary-ice bg-primary px-3 py-2 focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/30">
         {mentions.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1.5">
@@ -116,6 +109,26 @@ function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange, eff
           >
             ↑
           </button>
+        </div>
+      </div>
+
+      <div className="mt-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div className="flex justify-start">
+          {onNewChat && (
+            <Button variant="subtle" size="xs" onClick={onNewChat} disabled={busy}>
+              New chat
+            </Button>
+          )}
+        </div>
+        <p className="text-center text-xs text-slate-400">{CHAT_DISCLOSURE}</p>
+        <div className="flex justify-end">
+          <ModelPicker
+            model={model}
+            effort={effort}
+            onModelChange={onModelChange}
+            onEffortChange={onEffortChange}
+            disabled={busy}
+          />
         </div>
       </div>
     </div>
