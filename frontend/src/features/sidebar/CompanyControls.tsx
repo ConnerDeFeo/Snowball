@@ -1,10 +1,12 @@
 import YearRangePicker from '../company/YearRangePicker'
 import ViewNav from './ViewNav'
+import CompanyActions from '../company/CompanyActions'
 import Button from '../../shared/Button'
 import ProgressBar from '../../shared/ProgressBar'
 import type { RunState } from '../../hooks/evidenceRunReducer'
 import type { CompanyView } from '../../constants/companyViews'
 import type { YearRange } from '../../constants/yearRange'
+import type { EvidenceCategory } from '../../services/types/EvidenceTypes'
 
 interface CompanyControlsProps {
   tckr: string
@@ -13,7 +15,12 @@ interface CompanyControlsProps {
   view: CompanyView
   onViewChange: (view: CompanyView) => void
   checklistCount: string
+  categories: EvidenceCategory[]
+  selectedCategoryId: string | undefined
+  onSelectCategory: (id: string) => void
   onFetchFilings: () => void
+  onRunChecklist: () => void
+  onCancelRun: () => void
   runState: RunState
 }
 
@@ -33,7 +40,21 @@ function CompanyControls(p: CompanyControlsProps) {
         )}
       </div>
         <YearRangePicker range={p.range} onChange={p.onRangeChange} />
-      <ViewNav value={p.view} onChange={p.onViewChange} checklistCount={p.checklistCount} />
+      <ViewNav
+        value={p.view}
+        onChange={p.onViewChange}
+        checklistCount={p.checklistCount}
+        categories={p.categories}
+        selectedCategoryId={p.selectedCategoryId}
+        onSelectCategory={p.onSelectCategory}
+        checklistFooter={
+          <CompanyActions
+            active={p.runState.phase === 'fetching-docs' || p.runState.phase === 'running'}
+            onRun={p.onRunChecklist}
+            onCancel={p.onCancelRun}
+          />
+        }
+      />
     </section>
   )
 }

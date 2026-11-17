@@ -14,6 +14,7 @@ import { mergeEvidence } from '../features/company/mergeEvidence';
 import { countAnswered } from '../features/company/evidenceStats';
 import { useYearRange } from '../hooks/useYearRange';
 import { useCompanyView } from '../hooks/useCompanyView';
+import { useSelectedCategory } from '../hooks/useSelectedCategory';
 import { useAutoFetchFilings } from '../hooks/useAutoFetchFilings';
 import { useSlashToChat } from '../hooks/useSlashToChat';
 import { useChat } from '../hooks/useChat';
@@ -30,6 +31,7 @@ function Company() {
   const { tckr = '' } = useParams<{ tckr: string }>()
   const { range, setRange } = useYearRange()
   const { view, setView } = useCompanyView()
+  const { categoryId, select: selectCategory } = useSelectedCategory()
   const [sessionEvidence, setSessionEvidence] = useState<EvidenceCategory[]>([])
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -108,6 +110,7 @@ function Company() {
   const active = state.phase === 'fetching-docs' || state.phase === 'running'
   const answered = categories.reduce((sum, c) => sum + countAnswered(c), 0)
   const total = categories.reduce((sum, c) => sum + c.questions.length, 0)
+  const selectedCategoryId = categories.find((c) => c.id === categoryId)?.id ?? categories[0]?.id
 
   const controls = (
     <CompanyControls
@@ -117,7 +120,12 @@ function Company() {
       view={view}
       onViewChange={setView}
       checklistCount={total > 0 ? `${answered}/${total}` : ''}
+      categories={categories}
+      selectedCategoryId={selectedCategoryId}
+      onSelectCategory={selectCategory}
       onFetchFilings={() => start({ kind: 'documents-only' })}
+      onRunChecklist={() => start({ kind: 'checklist' })}
+      onCancelRun={cancel}
       runState={state}
     />
   )
@@ -136,14 +144,13 @@ function Company() {
         <div className="h-full p-6">
           <ChecklistView
             categories={categories}
+            selectedId={selectedCategoryId}
             loading={loading}
             error={error}
             onRetry={refresh}
             active={active}
             state={state}
             onStart={start}
-            onRun={() => start({ kind: 'checklist' })}
-            onCancel={cancel}
             onEdit={() => setView(EDIT_CHECKLIST_VIEW)}
           />
         </div>

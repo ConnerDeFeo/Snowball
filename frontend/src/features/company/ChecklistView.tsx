@@ -1,7 +1,4 @@
-import { useState } from 'react'
-import CategorySidebar from './CategorySidebar'
 import CategoryDetail from './CategoryDetail'
-import CompanyActions from './CompanyActions'
 import RunBanner from './RunBanner'
 import EmptyState from '../../shared/EmptyState'
 import type { RunTarget } from '../../hooks/useEvidenceRun'
@@ -10,19 +7,17 @@ import type { EvidenceCategory } from '../../services/types/EvidenceTypes'
 
 interface ChecklistViewProps {
   categories: EvidenceCategory[]
+  selectedId: string | undefined
   loading: boolean
   error: string | null
   onRetry: () => void
   active: boolean
   state: RunState
   onStart: (target: RunTarget) => void
-  onRun: () => void
-  onCancel: () => void
   onEdit: () => void
 }
 
-function ChecklistView({ categories, loading, error, onRetry, active, state, onStart, onRun, onCancel, onEdit }: ChecklistViewProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+function ChecklistView({ categories, selectedId, loading, error, onRetry, active, state, onStart, onEdit }: ChecklistViewProps) {
   const selected = categories.find((c) => c.id === selectedId) ?? categories[0]
 
   if (loading && !selected) return <div className="h-64 animate-pulse rounded-2xl bg-secondary-ice" />
@@ -48,12 +43,8 @@ function ChecklistView({ categories, loading, error, onRetry, active, state, onS
   }
 
   return (
-    <div className="flex h-full gap-6">
-      <div className="flex w-56 shrink-0 flex-col gap-3 overflow-y-auto">
-        <CategorySidebar categories={categories} selectedId={selected.id} onSelect={setSelectedId} />
-        <CompanyActions active={active} onRun={onRun} onCancel={onCancel} />
-        <RunBanner state={state} />
-      </div>
+    <div className="flex h-full flex-col gap-4">
+      <RunBanner state={state} />
       <CategoryDetail
         category={selected}
         disabled={active}

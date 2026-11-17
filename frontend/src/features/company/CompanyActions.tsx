@@ -12,13 +12,13 @@ function CompanyActions({ active, onRun, onCancel }: CompanyActionsProps) {
   return (
     <div className="[&>button]:w-full">
       {active ? (
-        <Button variant="ghost" onClick={onCancel}>
+        <Button variant="ghost" size="sm" onClick={onCancel}>
           <span className="flex items-center justify-center gap-2">
             <Spinner /> Cancel
           </span>
         </Button>
       ) : (
-        <Button onClick={onRun}>Run checklist ▸</Button>
+        <Button size="sm" onClick={onRun}>Run checklist ▸</Button>
       )}
     </div>
   )
