@@ -72,17 +72,14 @@ def _store_sectioned(report, base: str):
     store(f"{base}/statements.json", json.dumps(build_statements(report)).encode("utf-8"))
 
 
-def _store_10k(tckr: str, report):
-    fy, _ = _fiscal_focus(report)
-    year = fy or _year(_period_key(report))
+def _store_10k(tckr: str, report, year: str):
     base = f"filings/{tckr}/{FormType.TEN_K.value}/{year}"
     _store_sectioned(report, base)
 
 
-def _store_10q(tckr: str, report):
+def _store_10q(tckr: str, report, year: str):
     period = _period_key(report)
-    fy, fp = _fiscal_focus(report)
-    year = fy or _year(period)
+    _, fp = _fiscal_focus(report)
     quarter = fp or f"Q{_quarter(period)}"
     base = f"filings/{tckr}/{FormType.TEN_Q.value}/{year}/{quarter}"
     _store_sectioned(report, base)
@@ -100,7 +97,7 @@ def _process_10k(tckr: str, filing):
     """Download (filing.obj()) then store a single 10-K. Runs in a worker thread."""
     thread_name = threading.current_thread().name
     logger.info("[%s] START  10-K  %s  filed %s", thread_name, tckr, filing.filing_date)
-    _store_10k(tckr, filing.obj())
+    _store_10k(tckr, filing.obj(), str(filing.filing_date)[:4])
     logger.info("[%s] DONE   10-K  %s  filed %s", thread_name, tckr, filing.filing_date)
 
 
@@ -108,7 +105,7 @@ def _process_10q(tckr: str, filing):
     """Download (filing.obj()) then store a single 10-Q. Runs in a worker thread."""
     thread_name = threading.current_thread().name
     logger.info("[%s] START  10-Q  %s  filed %s", thread_name, tckr, filing.filing_date)
-    _store_10q(tckr, filing.obj())
+    _store_10q(tckr, filing.obj(), str(filing.filing_date)[:4])
     logger.info("[%s] DONE   10-Q  %s  filed %s", thread_name, tckr, filing.filing_date)
 
 
@@ -147,9 +144,9 @@ async def get_documents(
     Fetch every 10-K, 10-Q, and DEF 14A proxy statement for `tckr` filed within
     [start_year, end_year] and cache them to S3.
 
-    Layout (10-K/10-Q <year>/quarter are fiscal, from XBRL DEI focus facts,
-    falling back to calendar-derived values when XBRL is unavailable; DEF 14A
-    stays calendar-derived since proxies have no XBRL fiscal data):
+    Layout (<year> is the year the filing was filed. 10-Q <quarter> is the fiscal
+    period from XBRL DEI focus facts, falling back to the period's calendar quarter
+    when XBRL is unavailable; DEF 14A year is derived from the period):
       filings/<tckr>/10-K/<year>/<section>.txt (+ sections.json, statements.json)
       filings/<tckr>/10-Q/<year>/Q<n>/<section>.txt (+ sections.json, statements.json)
       filings/<tckr>/DEF 14A/<year>/proxy.txt

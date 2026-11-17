@@ -98,7 +98,7 @@ async def run_agent(
         system_prompt=(
             f"You answer questions about {tckr}'s SEC filings ({start_year}-{end_year}).\n\n"
             f"Sections the user mentioned (full text, may be empty):\n{mentions_text or '(none)'}\n\n"
-            f"Cached filing sections (year | form | period, then section):\n{filings_manifest_text or '(none cached)'}\n\n"
+            f"Cached filing sections (year filed | form | period, then section):\n{filings_manifest_text or '(none cached)'}\n\n"
             f"Checklist questions ([id] text):\n{checklist_manifest_text}\n\n"
             "Answer from the mentioned sections first. Call read_section to read any other "
             "section in the filings manifest (use year/form/period/section exactly as written there). "
