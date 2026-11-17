@@ -96,12 +96,12 @@ function Company() {
     key: `${tckr}:${range.start}-${range.end}`,
   })
 
-  // Leaving the checklist editor: reload evidence so the Checklist tab shows the edits.
-  const prevView = useRef(view)
-  useEffect(() => {
-    if (prevView.current === EDIT_CHECKLIST_VIEW && view !== EDIT_CHECKLIST_VIEW) refresh()
-    prevView.current = view
-  }, [view, refresh])
+  // After any checklist edit: drop this tab's run results (they're stored server-side) and reload,
+  // so deleted/renamed categories and questions show up in the sidebar and Checklist tab.
+  const onChecklistChanged = useCallback(() => {
+    setSessionEvidence([])
+    refresh()
+  }, [refresh])
 
   useSlashToChat(() => {
     if (view !== 'chat') setView('chat')
@@ -138,7 +138,7 @@ function Company() {
       onEditChecklist={() => setView(EDIT_CHECKLIST_VIEW)}
       editingChecklist={view === EDIT_CHECKLIST_VIEW}
     >
-      {view === EDIT_CHECKLIST_VIEW && <ChecklistEditor />}
+      {view === EDIT_CHECKLIST_VIEW && <ChecklistEditor onChanged={onChecklistChanged} />}
       {view === 'chat' && (
         <ChatView tckr={tckr} range={range} chat={chat} draft={draft} inputRef={inputRef} model={model} onModelChange={setModel} effort={effort} onEffortChange={setEffort} />
       )}

@@ -5,9 +5,17 @@ import { useChecklist } from '../../hooks/useChecklist'
 import { useSelectedCategory } from '../../hooks/useSelectedCategory'
 
 // Category list + editor for the selected category. Used inside the company page and standalone.
-function ChecklistEditor() {
+function ChecklistEditor({ onChanged }: { onChanged?: () => void }) {
   const checklist = useChecklist()
   const { categoryId } = useSelectedCategory()
+  // Every create/edit/delete calls refresh, so also tell the parent the checklist changed.
+  const synced = {
+    ...checklist,
+    refresh: async () => {
+      await checklist.refresh()
+      onChanged?.()
+    },
+  }
 
   return (
     <div className="h-full overflow-y-auto">
@@ -26,10 +34,10 @@ function ChecklistEditor() {
           </div>
         ) : (
           <>
-            <CategoryList checklist={checklist} />
+            <CategoryList checklist={synced} />
             <div className="flex-1">
               {categoryId ? (
-                <CategoryEditor categoryId={categoryId} checklist={checklist} />
+                <CategoryEditor categoryId={categoryId} checklist={synced} />
               ) : (
                 <EmptyState title="Select a category" description="Choose a checklist category from the list, or add a new one." />
               )}
