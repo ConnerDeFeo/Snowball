@@ -67,7 +67,7 @@ function CategoryEditor({ categoryId, checklist }: CategoryEditorProps) {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       <Card>
         <TextInput value={name} onChange={setName} placeholder="Category name" />
         <div className="mt-4 flex items-center gap-3">
