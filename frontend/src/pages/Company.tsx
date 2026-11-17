@@ -7,6 +7,8 @@ import RunBanner from '../features/company/RunBanner';
 import FinancialsView from '../features/financials/FinancialsView';
 import EventsView from '../features/events/EventsView';
 import InsidersView from '../features/insiders/InsidersView';
+import ChecklistEditor from '../features/checklist/ChecklistEditor';
+import { EDIT_CHECKLIST_VIEW } from '../constants/companyViews';
 import ChatView from '../features/company/subfeatures/chat/ChatView';
 import { mergeEvidence } from '../features/company/mergeEvidence';
 import { countAnswered } from '../features/company/evidenceStats';
@@ -31,8 +33,8 @@ function Company() {
   const [sessionEvidence, setSessionEvidence] = useState<EvidenceCategory[]>([])
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
-  const { model, setModel } = useChatModel()
-  const chat = useChat({ tckr, range, model })
+  const { model, setModel, effort, setEffort } = useChatModel()
+  const chat = useChat({ tckr, range, model, effort })
   const { serverEvidence, error, loading, refresh } = useEvidence(tckr, range)
   const financials = useFinancials(tckr, range)
   const events = useEvents(tckr, range)
@@ -90,6 +92,13 @@ function Company() {
     key: `${tckr}:${range.start}-${range.end}`,
   })
 
+  // Leaving the checklist editor: reload evidence so the Checklist tab shows the edits.
+  const prevView = useRef(view)
+  useEffect(() => {
+    if (prevView.current === EDIT_CHECKLIST_VIEW && view !== EDIT_CHECKLIST_VIEW) refresh()
+    prevView.current = view
+  }, [view, refresh])
+
   useSlashToChat(() => {
     if (view !== 'chat') setView('chat')
     requestAnimationFrame(() => inputRef.current?.focus())
@@ -114,9 +123,14 @@ function Company() {
   )
 
   return (
-    <AppShell controls={controls}>
+    <AppShell
+      controls={controls}
+      onEditChecklist={() => setView(EDIT_CHECKLIST_VIEW)}
+      editingChecklist={view === EDIT_CHECKLIST_VIEW}
+    >
+      {view === EDIT_CHECKLIST_VIEW && <ChecklistEditor />}
       {view === 'chat' && (
-        <ChatView tckr={tckr} range={range} chat={chat} inputRef={inputRef} model={model} onModelChange={setModel} />
+        <ChatView tckr={tckr} range={range} chat={chat} inputRef={inputRef} model={model} onModelChange={setModel} effort={effort} onEffortChange={setEffort} />
       )}
       {view === 'checklist' && (
         <div className="h-full p-6">
@@ -130,6 +144,7 @@ function Company() {
             onStart={start}
             onRun={() => start({ kind: 'checklist' })}
             onCancel={cancel}
+            onEdit={() => setView(EDIT_CHECKLIST_VIEW)}
           />
         </div>
       )}

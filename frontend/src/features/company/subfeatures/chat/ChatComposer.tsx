@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import MentionPicker from './MentionPicker'
-import Select from '../../../../shared/Select'
+import ModelPicker from './ModelPicker'
 import { displayMention } from '../../../../constants/categories'
-import { CHAT_MODELS } from '../../../../constants/chatModels'
-import type { ChatModel } from '../../../../constants/chatModels'
+import type { ChatEffort, ChatModel } from '../../../../constants/chatModels'
 import type { YearRange } from '../../../../constants/yearRange'
 import type { Mention } from '../../../../services/types/ReviewTypes'
 
@@ -14,9 +13,11 @@ interface ChatComposerProps {
   inputRef: React.RefObject<HTMLTextAreaElement | null>
   model: ChatModel
   onModelChange: (model: ChatModel) => void
+  effort: ChatEffort
+  onEffortChange: (effort: ChatEffort) => void
 }
 
-function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange }: ChatComposerProps) {
+function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange, effort, onEffortChange }: ChatComposerProps) {
   const [text, setText] = useState('')
   const [mentions, setMentions] = useState<Mention[]>([])
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -55,12 +56,22 @@ function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange }: C
   }
 
   return (
-    <div className="relative mx-auto w-full max-w-3xl p-3 pb-5">
+    <div className="relative mx-auto w-full max-w-3xl p-3 pb-2">
       {pickerOpen && (
         <div className="absolute right-3 bottom-full left-3 mb-1">
           <MentionPicker range={range} onAdd={(m) => setMentions((prev) => [...prev, m])} onClose={() => setPickerOpen(false)} />
         </div>
       )}
+
+      <div className="mb-1.5 flex justify-end">
+        <ModelPicker
+          model={model}
+          effort={effort}
+          onModelChange={onModelChange}
+          onEffortChange={onEffortChange}
+          disabled={busy}
+        />
+      </div>
 
       <div className="rounded-2xl border border-secondary-ice bg-primary px-3 py-2 focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/30">
         {mentions.length > 0 && (
@@ -89,15 +100,6 @@ function ChatComposer({ busy, range, onSend, inputRef, model, onModelChange }: C
             placeholder="Ask Snowball…  ( / to focus )"
             className="max-h-40 flex-1 resize-none bg-transparent py-1 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
           />
-          <div className="w-28 shrink-0">
-            <Select
-              value={model}
-              onChange={(v) => onModelChange(v as ChatModel)}
-              options={[...CHAT_MODELS]}
-              disabled={busy}
-              compact
-            />
-          </div>
           <button
             onClick={() => setPickerOpen(true)}
             disabled={pickerOpen}

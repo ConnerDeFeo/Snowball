@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom'
 import Card from '../../shared/Card'
 import Button from '../../shared/Button'
 import TextInput from '../../shared/TextInput'
@@ -9,12 +8,16 @@ import QuestionList from './QuestionList'
 import * as ChecklistService from '../../services/ChecklistService'
 import { ApiError } from '../../services/API'
 import { useToast } from '../../hooks/useToast'
+import { useSelectedCategory } from '../../hooks/useSelectedCategory'
 import type { useChecklist } from '../../hooks/useChecklist'
 
-function CategoryEditor() {
-  const { categoryId } = useParams<{ categoryId: string }>()
-  const checklist = useOutletContext<ReturnType<typeof useChecklist>>()
-  const navigate = useNavigate()
+interface CategoryEditorProps {
+  categoryId: string
+  checklist: ReturnType<typeof useChecklist>
+}
+
+function CategoryEditor({ categoryId, checklist }: CategoryEditorProps) {
+  const { select } = useSelectedCategory()
   const { showToast } = useToast()
   const category = checklist.categories.find((c) => c.id === categoryId)
 
@@ -56,7 +59,7 @@ function CategoryEditor() {
       await ChecklistService.deleteCategory(category!.id)
       showToast({ kind: 'info', message: `Deleted ${category!.name}` })
       await checklist.refresh()
-      navigate('/checklist')
+      select(null)
     } catch (err) {
       showToast({ kind: 'error', message: err instanceof ApiError ? err.detail : 'Failed to delete category' })
     } finally {

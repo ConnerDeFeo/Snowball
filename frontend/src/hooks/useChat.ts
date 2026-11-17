@@ -3,7 +3,7 @@ import * as ReviewService from '../services/ReviewService'
 import { ApiError } from '../services/API'
 import { reviewSessionKey } from '../constants/storageKeys'
 import type { YearRange } from '../constants/yearRange'
-import type { ChatModel } from '../constants/chatModels'
+import type { ChatEffort, ChatModel } from '../constants/chatModels'
 import type { Mention } from '../services/types/ReviewTypes'
 
 // One piece of an assistant turn, in the order it happened.
@@ -27,9 +27,10 @@ interface UseChatOptions {
   tckr: string
   range: YearRange
   model: ChatModel
+  effort: ChatEffort
 }
 
-export function useChat({ tckr, range, model }: UseChatOptions) {
+export function useChat({ tckr, range, model, effort }: UseChatOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [live, setLive] = useState<ChatPart[]>([])
   const liveRef = useRef<ChatPart[]>([]) // latest live parts, readable from the stream callback
@@ -72,6 +73,7 @@ export function useChat({ tckr, range, model }: UseChatOptions) {
           end_year: range.end,
           user_text: text,
           model,
+          effort,
           ...(sessionId && { session_id: sessionId }),
           ...(mentions.length > 0 && { mentions }),
         }, (frame) => {
@@ -100,8 +102,14 @@ export function useChat({ tckr, range, model }: UseChatOptions) {
         setBusy(false)
       }
     },
-    [tckr, range.start, range.end, model, updateLive],
+    [tckr, range.start, range.end, model, effort, updateLive],
   )
 
-  return { messages, live, busy, send }
+  const reset = useCallback(() => {
+    sessionStorage.removeItem(reviewSessionKey(tckr, range.start, range.end))
+    setMessages([])
+    updateLive([])
+  }, [tckr, range.start, range.end, updateLive])
+
+  return { messages, live, busy, send, reset }
 }

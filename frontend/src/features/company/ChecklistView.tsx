@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 import CategorySidebar from './CategorySidebar'
 import CategoryDetail from './CategoryDetail'
 import CompanyActions from './CompanyActions'
@@ -19,9 +18,10 @@ interface ChecklistViewProps {
   onStart: (target: RunTarget) => void
   onRun: () => void
   onCancel: () => void
+  onEdit: () => void
 }
 
-function ChecklistView({ categories, loading, error, onRetry, active, state, onStart, onRun, onCancel }: ChecklistViewProps) {
+function ChecklistView({ categories, loading, error, onRetry, active, state, onStart, onRun, onCancel, onEdit }: ChecklistViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selected = categories.find((c) => c.id === selectedId) ?? categories[0]
 
@@ -42,7 +42,7 @@ function ChecklistView({ categories, loading, error, onRetry, active, state, onS
       <EmptyState
         title="No checklist yet"
         description="Add categories and questions to the checklist, then run it."
-        action={<Link to="/checklist" className="text-sm font-semibold text-secondary-deep underline">Edit checklist</Link>}
+        action={<button onClick={onEdit} className="cursor-pointer text-sm font-semibold text-secondary-deep underline">Edit checklist</button>}
       />
     )
   }

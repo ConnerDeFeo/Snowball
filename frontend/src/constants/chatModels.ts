@@ -7,3 +7,13 @@ export const CHAT_MODELS = [
 export type ChatModel = (typeof CHAT_MODELS)[number]['value']
 
 export const DEFAULT_CHAT_MODEL: ChatModel = 'claude-haiku-5-5'
+
+export const CHAT_EFFORTS = [
+  { value: 'low', label: 'Low' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'high', label: 'High' },
+] as const
+
+export type ChatEffort = (typeof CHAT_EFFORTS)[number]['value']
+
+export const DEFAULT_CHAT_EFFORT: ChatEffort = 'low'

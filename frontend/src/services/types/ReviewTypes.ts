@@ -1,4 +1,4 @@
-import type { ChatModel } from '../../constants/chatModels'
+import type { ChatEffort, ChatModel } from '../../constants/chatModels'
 
 // A filing section the user @-mentioned. quarter is omitted for a 10-K.
 export interface Mention {
@@ -15,6 +15,7 @@ export interface ReviewRequest {
   session_id?: string
   mentions?: Mention[]
   model?: ChatModel
+  effort?: ChatEffort
 }
 
 export type ReviewFrame =

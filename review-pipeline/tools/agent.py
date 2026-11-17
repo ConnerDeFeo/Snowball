@@ -9,7 +9,7 @@ from filings.grep_filing import grep_filing
 from filings.manifest import filings_manifest
 from filings.read_section import read_section as fetch_section
 from utils import analysis_client
-from utils.llm import DEFAULT_MODEL, chat_model
+from utils.llm import DEFAULT_EFFORT, DEFAULT_MODEL, chat_model
 
 def _text_of(content) -> str:
     # Content is a str or a list of blocks; keep only the {"type": "text", "text": ...} ones (drops thinking).
@@ -28,6 +28,7 @@ async def run_agent(
     # Callable function that takes dict param and returns awaitable nothing
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
     model: str = DEFAULT_MODEL,
+    effort: str = DEFAULT_EFFORT,
 ) -> tuple[str, list[dict]]:
 
     # Agent reads the docstring
@@ -72,7 +73,7 @@ async def run_agent(
         return filings_manifest(tckr, start_year, end_year) or "(no sections found after fetching)"
 
     agent = create_agent(
-        model=chat_model(model),
+        model=chat_model(model, effort),
         tools=[read_section, grep_filing_tool, get_evidence, fetch_filings],
         system_prompt=(
             f"You answer questions about {tckr}'s SEC filings ({start_year}-{end_year}).\n\n"

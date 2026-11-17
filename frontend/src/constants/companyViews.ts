@@ -6,6 +6,9 @@ export const COMPANY_VIEWS = [
   { value: 'insiders', label: 'Insiders' },
 ] as const
 
-export type CompanyView = (typeof COMPANY_VIEWS)[number]['value']
+// Not a tab in COMPANY_VIEWS: reached from the sidebar's "Edit checklist" button.
+export const EDIT_CHECKLIST_VIEW = 'edit-checklist'
+
+export type CompanyView = (typeof COMPANY_VIEWS)[number]['value'] | typeof EDIT_CHECKLIST_VIEW
 
 export const DEFAULT_VIEW: CompanyView = 'chat'

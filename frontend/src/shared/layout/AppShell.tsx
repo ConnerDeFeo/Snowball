@@ -3,11 +3,13 @@ import Sidebar from '../../features/sidebar/Sidebar'
 
 interface AppShellProps {
   controls?: React.ReactNode
+  onEditChecklist?: () => void
+  editingChecklist?: boolean
   children: React.ReactNode
 }
 
 // Left control panel + main area. On small screens the panel is an off-canvas drawer.
-function AppShell({ controls, children }: AppShellProps) {
+function AppShell({ controls, onEditChecklist, editingChecklist, children }: AppShellProps) {
   const [open, setOpen] = useState(false)
 
   // Close the drawer after navigating (links, or anything marked data-close).
@@ -24,7 +26,9 @@ function AppShell({ controls, children }: AppShellProps) {
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <Sidebar>{controls}</Sidebar>
+        <Sidebar onEditChecklist={onEditChecklist} editingChecklist={editingChecklist}>
+          {controls}
+        </Sidebar>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex h-12 shrink-0 items-center px-3 lg:hidden">
