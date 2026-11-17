@@ -21,7 +21,7 @@ function filingId(f: FilingStatements): string {
 }
 
 function filingLabel(f: FilingStatements): string {
-  return f.quarter ? `${f.form} ${f.year} ${f.quarter}` : `${f.form} FY${f.year}`
+  return f.quarter ? `${f.form} ${f.year} ${f.quarter}` : `${f.form} ${f.year}`
 }
 
 function FinancialsView({ filings, loading, error, onRetry, fetching }: FinancialsViewProps) {
