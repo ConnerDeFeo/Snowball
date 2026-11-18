@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import ChatMessage from './ChatMessage'
-import { useStickToBottom } from '../../../../hooks/useStickToBottom'
+import { useScrollToBottom } from '../../../../hooks/useScrollToBottom'
 import { CHAT_SUGGESTIONS } from '../../../../constants/chatSuggestions'
 import type { ChatMessage as ChatMessageType, ChatPart } from '../../../../hooks/useChat'
 
@@ -13,13 +13,13 @@ interface ChatTranscriptProps {
 }
 
 function ChatTranscript({ tckr, messages, live, busy, onSuggest }: ChatTranscriptProps) {
-  const { scrollRef, contentRef, onScroll, pin } = useStickToBottom()
+  const { scrollRef, scrollToBottom } = useScrollToBottom()
 
-  // Sending a message resumes following the bottom.
+  // Sending a message jumps to the bottom once; streaming never scrolls.
   const lastRole = messages[messages.length - 1]?.role
   useEffect(() => {
-    if (lastRole === 'user') pin()
-  }, [messages.length, lastRole, pin])
+    if (lastRole === 'user') scrollToBottom()
+  }, [messages.length, lastRole, scrollToBottom])
 
   if (messages.length === 0 && !busy) {
     return (
@@ -48,8 +48,8 @@ function ChatTranscript({ tckr, messages, live, busy, onSuggest }: ChatTranscrip
   const waiting = busy && (live.length === 0 || live[live.length - 1].kind === 'tool')
 
   return (
-    <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto">
-      <div ref={contentRef} className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-4">
+    <div ref={scrollRef} className="flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 p-4">
         {messages.map((m, i) => (
           <ChatMessage key={i} {...m} />
         ))}
