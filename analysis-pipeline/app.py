@@ -10,6 +10,7 @@ from routes.evidence import router as evidence_router
 from routes.financials import router as financials_router
 from routes.health import router as health_router
 from routes.insiders import router as insiders_router
+from routes.proxies import router as proxies_router
 import logging
 
 logging.basicConfig(
@@ -29,6 +30,7 @@ def create_app():
     app.include_router(financials_router)
     app.include_router(health_router)
     app.include_router(insiders_router)
+    app.include_router(proxies_router)
 
     # asyncio.to_thread's default executor is sized min(32, cpu_count + 4), which
     # on a small instance (e.g. 2 vCPUs) caps us at 6 — below the evidence

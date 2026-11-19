@@ -8,6 +8,7 @@ from langchain_core.tools import tool
 from filings.eight_k import eight_k_list, read_8k as fetch_8k
 from filings.grep_filing import grep_filing
 from filings.manifest import filings_manifest
+from filings.proxy import grep_proxy, read_proxy as fetch_proxy
 from filings.read_section import read_section as fetch_section
 from utils import analysis_client
 from utils.llm import DEFAULT_EFFORT, DEFAULT_MODEL, chat_model
@@ -52,6 +53,23 @@ async def run_agent(
         return result if result is not None else "filing not found (it may need to be re-fetched)"
 
     @tool
+    def grep_proxy_tool(proxy_id: str, pattern: str) -> str:
+        """Regex-search (case-insensitive) one proxy statement (DEF 14A). Use proxy_id exactly
+        as it appears on the DEF 14A lines of the filings manifest. Returns matches with
+        surrounding context, each labeled with its character offset. Pass an offset to
+        read_proxy to read more of the passage."""
+        result = grep_proxy(tckr, proxy_id, pattern)
+        return result if result is not None else "proxy not found (it may need to be re-fetched)"
+
+    @tool
+    def read_proxy(proxy_id: str, offset: int) -> str:
+        """Read about 8,000 characters of one proxy statement (DEF 14A), starting just before
+        the character offset (use an offset from grep_proxy_tool). The result ends with the
+        range returned and the total length; pass the end of that range as offset to continue."""
+        result = fetch_proxy(tckr, proxy_id, offset)
+        return result if result is not None else "proxy not found (it may need to be re-fetched)"
+
+    @tool
     def get_evidence(question_id: str) -> str:
         """Get the evidence the checklist agent extracted from the filings for one
         checklist question. Use the question id exactly as it appears in the checklist
@@ -94,16 +112,18 @@ async def run_agent(
 
     agent = create_agent(
         model=chat_model(model, effort),
-        tools=[read_section, grep_filing_tool, get_evidence, list_8k_filings, read_8k, fetch_filings],
+        tools=[read_section, grep_filing_tool, grep_proxy_tool, read_proxy, get_evidence, list_8k_filings, read_8k, fetch_filings],
         system_prompt=(
             f"You answer questions about {tckr}'s SEC filings ({start_year}-{end_year}).\n\n"
             f"Sections the user mentioned (full text, may be empty):\n{mentions_text or '(none)'}\n\n"
-            f"Cached filing sections (year filed | form | period, then section):\n{filings_manifest_text or '(none cached)'}\n\n"
+            f"Cached filings (year filed | form | period or proxy id, then section):\n{filings_manifest_text or '(none cached)'}\n\n"
             f"Checklist questions ([id] text):\n{checklist_manifest_text}\n\n"
             "Answer from the mentioned sections first. Call read_section to read any other "
             "section in the filings manifest (use year/form/period/section exactly as written there). "
             "If you don't know which section mentions something, call grep_filing_tool to regex-search a whole "
             "filing, then read_section on the section it points to. "
+            "For executive pay, board, governance or shareholder-vote questions, call grep_proxy_tool "
+            "on a DEF 14A from the manifest, then read_proxy at a hit's offset. "
             "Call get_evidence for the evidence behind a checklist question. "
             "For material events (earnings releases, executive changes, acquisitions, etc.) call "
             "list_8k_filings to browse the 8-Ks, then read_8k on the relevant ones. "

@@ -17,4 +17,13 @@ def filings_manifest(tckr: str, start_year: int, end_year: int) -> str:
     for year, form, quarter in sorted(groups):
         lines.append(f"{year} | {form} | {quarter}")
         lines += [f"  {section}" for section in sorted(groups[(year, form, quarter)])]
+
+    # Proxies have no sections: one line each, with the id the proxy tools take.
+    proxy_prefix = f"filings/{tckr}/DEF 14A/"
+    proxy_ids = sorted(
+        key[len(proxy_prefix):].split("/")[0]
+        for key in list_keys(proxy_prefix)
+        if key.endswith("/proxy.txt") and start_year <= int(key[len(proxy_prefix):][:4]) <= end_year
+    )
+    lines += [f"{proxy_id[:4]} | DEF 14A | {proxy_id}" for proxy_id in proxy_ids]
     return "\n".join(lines)

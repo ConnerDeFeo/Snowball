@@ -86,8 +86,8 @@ def _store_10q(tckr: str, report, year: str):
 
 
 def _store_proxy(tckr: str, filing):
-    year = _year(_period_key(filing))
-    base = f"filings/{tckr}/{FormType.PROXY.value}/{year}"
+    # One folder per filing, so several proxies in the same year don't overwrite each other.
+    base = f"filings/{tckr}/{FormType.PROXY.value}/{filing.filing_date}_{filing.accession_no}"
     store(f"{base}/proxy.txt", (filing.text() or "").encode("utf-8"))
     data = build_proxy_data(filing.obj())
     store(f"{base}/data.json", json.dumps(data).encode("utf-8"))
@@ -146,10 +146,10 @@ async def get_documents(
 
     Layout (<year> is the year the filing was filed. 10-Q <quarter> is the fiscal
     period from XBRL DEI focus facts, falling back to the period's calendar quarter
-    when XBRL is unavailable; DEF 14A year is derived from the period):
+    when XBRL is unavailable):
       filings/<tckr>/10-K/<year>/<section>.txt (+ sections.json, statements.json)
       filings/<tckr>/10-Q/<year>/Q<n>/<section>.txt (+ sections.json, statements.json)
-      filings/<tckr>/DEF 14A/<year>/proxy.txt
+      filings/<tckr>/DEF 14A/<filing_date>_<accession>/proxy.txt (+ data.json)
       filings/<tckr>/8-K/<filing_date>_<accession>/event.md (+ meta.json)
       filings/<tckr>/insiders/<filing_date>_<accession>/doc.md (+ meta.json)  (Form 4, 13D)
 

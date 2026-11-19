@@ -5,6 +5,7 @@ import CompanyControls from '../features/sidebar/CompanyControls';
 import ChecklistView from '../features/company/ChecklistView';
 import RunBanner from '../features/company/RunBanner';
 import FinancialsView from '../features/financials/FinancialsView';
+import ProxiesView from '../features/proxies/ProxiesView';
 import EventsView from '../features/events/EventsView';
 import InsidersView from '../features/insiders/InsidersView';
 import ChecklistEditor from '../features/checklist/ChecklistEditor';
@@ -23,6 +24,7 @@ import { useChatDraft } from '../hooks/useChatDraft';
 import { useEvidenceRun } from '../hooks/useEvidenceRun';
 import { useEvidence } from '../hooks/useEvidence';
 import { useFinancials } from '../hooks/useFinancials';
+import { useProxies } from '../hooks/useProxies';
 import { useEvents } from '../hooks/useEvents';
 import { useInsiders } from '../hooks/useInsiders';
 import { recordRecent } from '../hooks/useRecents';
@@ -41,6 +43,7 @@ function Company() {
   const draft = useChatDraft()
   const { serverEvidence, error, loading, refresh } = useEvidence(tckr, range)
   const financials = useFinancials(tckr, range)
+  const proxies = useProxies(tckr, range)
   const events = useEvents(tckr, range)
   const insiders = useInsiders(tckr, range)
 
@@ -59,20 +62,31 @@ function Company() {
 
   // A finished run may have just downloaded new filings, so reload their statements and events.
   const { refresh: refreshFinancials } = financials
+  const { refresh: refreshProxies } = proxies
   const { refresh: refreshEvents } = events
   const { refresh: refreshInsiders } = insiders
   useEffect(() => {
     if (state.phase === 'done') {
       refreshFinancials()
+      refreshProxies()
       refreshEvents()
       refreshInsiders()
     }
-  }, [state.phase, refreshFinancials, refreshEvents, refreshInsiders])
+  }, [state.phase, refreshFinancials, refreshProxies, refreshEvents, refreshInsiders])
 
   // Opening Financials with nothing cached fetches the filings automatically.
   useAutoFetchFilings({
     enabled: view === 'financials',
     empty: !financials.loading && !financials.error && financials.filings.length === 0,
+    busy: state.phase === 'fetching-docs' || state.phase === 'running',
+    fetch: () => start({ kind: 'documents-only' }),
+    key: `${tckr}:${range.start}-${range.end}`,
+  })
+
+  // Same for Proxies: nothing cached means the DEF 14As haven't been fetched yet.
+  useAutoFetchFilings({
+    enabled: view === 'proxies',
+    empty: !proxies.loading && !proxies.error && proxies.filings.length === 0,
     busy: state.phase === 'fetching-docs' || state.phase === 'running',
     fetch: () => start({ kind: 'documents-only' }),
     key: `${tckr}:${range.start}-${range.end}`,
@@ -167,6 +181,20 @@ function Company() {
             loading={financials.loading}
             error={financials.error}
             onRetry={financials.refresh}
+            fetching={active}
+          />
+        </div>
+      )}
+      {view === 'proxies' && (
+        <div className="h-full overflow-y-auto p-6">
+          <div className="mb-4">
+            <RunBanner state={state} />
+          </div>
+          <ProxiesView
+            filings={proxies.filings}
+            loading={proxies.loading}
+            error={proxies.error}
+            onRetry={proxies.refresh}
             fetching={active}
           />
         </div>

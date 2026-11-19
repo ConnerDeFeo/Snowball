@@ -2,6 +2,7 @@ export const COMPANY_VIEWS = [
   { value: 'chat', label: 'Chat' },
   { value: 'checklist', label: 'Checklist' },
   { value: 'financials', label: 'Financials' },
+  { value: 'proxies', label: 'Proxies' },
   { value: 'events', label: 'Events' },
   { value: 'insiders', label: 'Insiders' },
 ] as const
