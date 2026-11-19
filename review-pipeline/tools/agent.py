@@ -10,6 +10,7 @@ from filings.grep_filing import grep_filing
 from filings.manifest import filings_manifest
 from filings.proxy import grep_proxy, read_proxy as fetch_proxy
 from filings.read_section import read_section as fetch_section
+from tools.tool_log import format_log, record_call, record_result
 from utils import analysis_client
 from utils.llm import DEFAULT_EFFORT, DEFAULT_MODEL, chat_model
 
@@ -25,7 +26,8 @@ async def run_agent(
     mentions_text:str, filings_manifest_text:str, checklist_manifest_text:str, user_text:str,
     # Prior turns for this session, as plain {"role","content"} dicts. The
     # mentioned sections and manifests are re-injected into the system prompt
-    # every request, so only user/assistant turns are kept — no serialized tool calls.
+    # every request, so only user/assistant turns are kept. Each assistant turn ends
+    # with a compact [Tools used this turn] log (calls + short digests, not full results).
     history: Optional[list[dict]] = None,
     # Callable function that takes dict param and returns awaitable nothing
     on_progress: Optional[Callable[[dict], Awaitable[None]]] = None,
@@ -128,7 +130,10 @@ async def run_agent(
             "For material events (earnings releases, executive changes, acquisitions, etc.) call "
             "list_8k_filings to browse the 8-Ks, then read_8k on the relevant ones. "
             "If the filings manifest is empty, call fetch_filings before answering. "
-            "Cite the form, year and section you relied on."
+            "Cite the form, year and section you relied on. "
+            "When you rely on figures from a tool result, state them explicitly in your answer. "
+            "Earlier assistant turns end with a [Tools used this turn] log of what you already read. "
+            "Don't claim you haven't checked something listed there; re-call the tool only if you need its exact text again."
         ),
     )
 
@@ -140,6 +145,7 @@ async def run_agent(
     # Stream node-by-node updates so we can report each tool call as it happens,
     # and collect the text of every assistant message (including text written before a tool call).
     segments: list[str] = []
+    log: list[dict] = []
     async for mode, data in agent.astream({"messages": messages}, stream_mode=["updates", "messages"]):
         if mode == "messages":
             # Token-level chunks from the model; forward text to the client as it arrives.
@@ -153,14 +159,21 @@ async def run_agent(
         for update in data.values():
             for msg in update.get("messages", []):
                 tool_calls = getattr(msg, "tool_calls", None) or []
-                if on_progress:
-                    for call in tool_calls:
+                for call in tool_calls:
+                    record_call(log, call)
+                    if on_progress:
                         await on_progress({"type": "progress", "tool": call["name"], "args": call.get("args", {})})
+                if getattr(msg, "type", None) == "tool":
+                    record_result(log, msg)
                 if getattr(msg, "type", None) == "ai":
                     text = _text_of(msg.content).strip()
                     if text:
                         segments.append(text)
 
     final_text = "\n\n".join(segments)
-    updated_history = messages + [{"role": "assistant", "content": final_text}]
+    # The tool log goes only into stored history, not the answer returned to the user.
+    stored_text = final_text
+    if log:
+        stored_text += f"\n\n[Tools used this turn:\n{format_log(log)}]"
+    updated_history = messages + [{"role": "assistant", "content": stored_text}]
     return final_text, updated_history
