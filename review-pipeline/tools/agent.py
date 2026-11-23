@@ -132,8 +132,10 @@ async def run_agent(
             "If the filings manifest is empty, call fetch_filings before answering. "
             "Cite the form, year and section you relied on. "
             "When you rely on figures from a tool result, state them explicitly in your answer. "
-            "Earlier assistant turns end with a [Tools used this turn] log of what you already read. "
-            "Don't claim you haven't checked something listed there; re-call the tool only if you need its exact text again."
+            "Earlier assistant turns end with a [Tools used this turn] log. That log is only a short digest "
+            "of each result. You saw the full results when you wrote that answer, so quotes and figures in "
+            "your earlier answers are verified. Don't re-check, doubt or retract them just because they "
+            "don't appear in the digest. Re-call a tool only to read new material, or if the user disputes a specific claim."
         ),
     )
 
@@ -174,6 +176,6 @@ async def run_agent(
     # The tool log goes only into stored history, not the answer returned to the user.
     stored_text = final_text
     if log:
-        stored_text += f"\n\n[Tools used this turn:\n{format_log(log)}]"
+        stored_text += f"\n\n[Tools used this turn (results truncated; the answer above was written from the full results):\n{format_log(log)}]"
     updated_history = messages + [{"role": "assistant", "content": stored_text}]
     return final_text, updated_history
